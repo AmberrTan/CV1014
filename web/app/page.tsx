@@ -14,50 +14,68 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="shell">
+    <main className="shell section">
       <section className="hero">
         <div className="hero-panel">
-          <div className="eyebrow">Optional Showcase UI</div>
-          <h1>Find the right gym without guesswork.</h1>
-          <p>
-            This frontend sits on top of the Python recommendation system. Browse gyms, filter by
-            preferences, compare options, and surface stronger matches for different fitness goals.
+          <div className="eyebrow" style={{ marginBottom: 16 }}>Welcome to Fitness Finder</div>
+          <h1 style={{ marginBottom: 24, fontSize: "clamp(2.8rem, 8vw, 6rem)" }}>
+            Find the right gym, without the guesswork.
+          </h1>
+          <p style={{ fontSize: "1.2rem", maxWidth: "65ch", marginBottom: 40 }}>
+            This system helps you navigate the complex gym landscape. Whether you're a beginner
+            looking for a friendly community or an advanced lifter needing specific equipment, our
+            scoring engine has you covered.
           </p>
           <div className="cta-row">
             <Link className="button" href="/browse">
-              Explore gyms
+              Explore the database
             </Link>
             <Link className="button-secondary" href="/recommend">
-              Get recommendations
+              Get personalized matches
             </Link>
           </div>
         </div>
         <div className="hero-grid">
           <div className="stat">
-            <strong>{gyms.length}</strong>
-            <span>gyms in the offline database</span>
+            <span style={{ fontSize: "0.9rem", color: "var(--muted)", textTransform: "uppercase" }}>Dataset</span>
+            <strong style={{ fontSize: "2.5rem", marginTop: 4 }}>{gyms.length}</strong>
+            <p style={{ margin: 0 }}>Verified gym locations in Singapore</p>
           </div>
           <div className="stat">
-            <strong>5</strong>
-            <span>main demo flows across browse, recommend, compare, and admin</span>
+            <span style={{ fontSize: "0.9rem", color: "var(--muted)", textTransform: "uppercase" }}>Scoring</span>
+            <strong style={{ fontSize: "2.5rem", marginTop: 4 }}>20+</strong>
+            <p style={{ margin: 0 }}>Data points used per recommendation</p>
           </div>
           <div className="stat">
-            <strong>Python</strong>
-            <span>remains the source of truth for search, scoring, and updates</span>
+            <span style={{ fontSize: "0.9rem", color: "var(--muted)", textTransform: "uppercase" }}>Technology</span>
+            <strong style={{ fontSize: "2.5rem", marginTop: 4 }}>Python</strong>
+            <p style={{ margin: 0 }}>High-performance scoring & search backend</p>
           </div>
         </div>
       </section>
 
-      <section className="section">
-        <div className="panel">
-          <h2>Featured gyms</h2>
-          <p>A quick sample from the shared JSON dataset used by both the console app and the API.</p>
-          {loadError ? (
-            <p className="notice" data-tone="error" style={{ marginTop: 16 }}>
-              The backend is currently unavailable, so featured gyms could not be loaded.
+      <section className="section" style={{ marginTop: 64 }}>
+        <div className="panel" style={{ background: "rgba(255, 250, 242, 0.6)" }}>
+          <header style={{ marginBottom: 32 }}>
+            <div className="eyebrow">Local Highlights</div>
+            <h2 style={{ fontSize: "2.4rem" }}>Featured gyms</h2>
+            <p style={{ maxWidth: "60ch" }}>
+              A selection from the shared gym dataset. Use the filters to find more tailored
+              options.
             </p>
+          </header>
+          
+          {loadError ? (
+            <div className="notice" data-tone="error" style={{ marginBottom: 24, display: "flex", gap: 16, alignItems: "center" }}>
+              <span style={{ fontSize: "1.5rem" }}>⚠️</span>
+              <p style={{ margin: 0 }}>
+                The backend is currently offline. Please ensure the Python API is running to view
+                live gym data.
+              </p>
+            </div>
           ) : null}
-          <div className="grid cards" style={{ marginTop: 20 }}>
+
+          <div className="grid cards">
             {gyms.slice(0, 3).map((gym) => (
               <GymCard key={gym.gym_id} gym={gym} />
             ))}

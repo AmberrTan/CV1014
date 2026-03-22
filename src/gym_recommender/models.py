@@ -26,6 +26,27 @@ class GoogleMapsData(TypedDict, total=False):
     fetched_at: str
 
 
+class OpenStreetMapData(TypedDict, total=False):
+    osm_type: str | None
+    osm_id: int | None
+    place_id: int | None
+    display_name: str | None
+    name: str | None
+    latitude: float | None
+    longitude: float | None
+    category: str | None
+    type: str | None
+    importance: float | None
+    place_rank: int | None
+    address: dict[str, str]
+    namedetails: dict[str, str]
+    extratags: dict[str, str]
+    website: str | None
+    opening_hours: str | None
+    phone: str | None
+    fetched_at: str
+
+
 class GymRecordBase(TypedDict):
     gym_id: int
     gym_name: str
@@ -53,6 +74,7 @@ class GymRecordBase(TypedDict):
 
 class GymRecord(GymRecordBase, total=False):
     google_maps: GoogleMapsData
+    openstreetmap: OpenStreetMapData
 
 
 class SearchFilters(TypedDict, total=False):

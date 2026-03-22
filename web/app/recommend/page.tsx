@@ -56,23 +56,23 @@ export default function RecommendPage() {
     <main className="shell section">
       <div className="panel">
         <div className="eyebrow">Recommend</div>
-        <h1 style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}>Personalized gym matching</h1>
-        <p>Send your preferences to the Python scoring engine and review the top-ranked results.</p>
-        <form
-          onSubmit={handleSubmit}
-          className="toolbar"
-          style={{ marginTop: 18 }}
-        >
+        <h1 style={{ fontSize: "clamp(2rem, 5vw, 4rem)", marginBottom: 12 }}>Personalized gym matching</h1>
+        <p style={{ maxWidth: "60ch", marginBottom: 32 }}>
+          Our scoring engine uses your unique preferences to find the best fit. Let us know what
+          matters most to you.
+        </p>
+
+        <form onSubmit={handleSubmit} className="toolbar">
           <div className="field">
             <label htmlFor="recommend-area">Preferred area</label>
-            <input id="recommend-area" name="preferred_area" placeholder="Raffles Place" />
+            <input id="recommend-area" name="preferred_area" placeholder="e.g. Raffles Place" />
           </div>
           <div className="field">
-            <label htmlFor="recommend-max-budget">Max budget</label>
+            <label htmlFor="recommend-max-budget">Max monthly budget ($)</label>
             <input id="recommend-max-budget" name="max_budget" type="number" placeholder="200" />
           </div>
           <div className="field">
-            <label htmlFor="recommend-min-rating">Minimum rating</label>
+            <label htmlFor="recommend-min-rating">Minimum rating (0-5)</label>
             <input
               id="recommend-min-rating"
               name="min_rating"
@@ -80,27 +80,21 @@ export default function RecommendPage() {
               min="0"
               max="5"
               step="0.1"
-              placeholder="4.2"
+              placeholder="4.0"
             />
-          </div>
-          <div className="field">
-            <label htmlFor="recommend-preferred-facilities">Preferred facilities</label>
-            <input
-              id="recommend-preferred-facilities"
-              name="preferred_facilities"
-              placeholder="group classes, shower"
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="recommend-preferred-time">Preferred time</label>
-            <input id="recommend-preferred-time" name="preferred_time" type="number" placeholder="1900" />
           </div>
           <div className="field">
             <label htmlFor="recommend-fitness-goal">Fitness goal</label>
-            <input id="recommend-fitness-goal" name="fitness_goal" placeholder="general fitness" />
+            <select id="recommend-fitness-goal" name="fitness_goal" defaultValue="general fitness">
+              <option value="general fitness">General fitness</option>
+              <option value="bodybuilding">Bodybuilding</option>
+              <option value="powerlifting">Powerlifting</option>
+              <option value="weight loss">Weight loss</option>
+              <option value="cardio">Cardio focus</option>
+            </select>
           </div>
           <div className="field">
-            <label htmlFor="recommend-skill-level">Skill level</label>
+            <label htmlFor="recommend-skill-level">Your skill level</label>
             <select id="recommend-skill-level" name="skill_level" defaultValue="beginner">
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
@@ -109,33 +103,76 @@ export default function RecommendPage() {
           </div>
           <div className="field">
             <label htmlFor="recommend-gym-type">Preferred gym type</label>
-            <input id="recommend-gym-type" name="preferred_gym_type" placeholder="commercial" />
+            <select id="recommend-gym-type" name="preferred_gym_type" defaultValue="">
+              <option value="">Any type</option>
+              <option value="commercial">Commercial</option>
+              <option value="boutique">Boutique</option>
+              <option value="community">Community</option>
+            </select>
           </div>
           <div className="field">
-            <label htmlFor="recommend-user-x">User X</label>
+            <label htmlFor="recommend-preferred-facilities">Preferred facilities</label>
+            <input
+              id="recommend-preferred-facilities"
+              name="preferred_facilities"
+              placeholder="e.g. group classes, shower"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="recommend-preferred-time">Preferred time (HHMM)</label>
+            <input id="recommend-preferred-time" name="preferred_time" type="number" placeholder="1800" />
+          </div>
+
+          <div className="field" style={{ gridColumn: "span 1" }}>
+            <label htmlFor="recommend-user-x">User X (Loc)</label>
             <input id="recommend-user-x" name="user_x" type="number" placeholder="60" />
           </div>
-          <div className="field">
-            <label htmlFor="recommend-user-y">User Y</label>
+          <div className="field" style={{ gridColumn: "span 1" }}>
+            <label htmlFor="recommend-user-y">User Y (Loc)</label>
             <input id="recommend-user-y" name="user_y" type="number" placeholder="70" />
           </div>
-          <div className="field">
-            <label htmlFor="recommend-female-friendly">Female-friendly</label>
-            <input id="recommend-female-friendly" name="female_friendly" type="checkbox" />
+
+          <div
+            className="field"
+            style={{
+              gridColumn: "1 / -1",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 24,
+              marginTop: 12,
+            }}
+          >
+            <label
+              style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+              htmlFor="recommend-female-friendly"
+            >
+              <input id="recommend-female-friendly" name="female_friendly" type="checkbox" />
+              Female-friendly environment
+            </label>
+            <label
+              style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+              htmlFor="recommend-classes-required"
+            >
+              <input id="recommend-classes-required" name="classes_required" type="checkbox" />
+              Classes required
+            </label>
           </div>
-          <div className="field">
-            <label htmlFor="recommend-classes-required">Classes required</label>
-            <input id="recommend-classes-required" name="classes_required" type="checkbox" />
+
+          <div style={{ gridColumn: "1 / -1", marginTop: 20 }}>
+            <button className="button" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? "Generating recommendations..." : "Find my top matches"}
+            </button>
           </div>
-          <button className="button" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting ? "Calculating..." : "Recommend gyms"}
-          </button>
         </form>
-        <p className="notice" data-tone={statusTone} style={{ marginTop: 18 }} aria-live="polite">
-          {status}
-        </p>
+
+        {status ? (
+          <p className="notice" data-tone={statusTone} style={{ marginTop: 24 }} aria-live="polite">
+            {status}
+          </p>
+        ) : null}
       </div>
-      <div className="grid cards" style={{ marginTop: 24 }}>
+
+      <div className="grid cards" style={{ marginTop: 40 }}>
         {results.map((gym) => (
           <GymCard key={gym.gym_id} gym={gym} />
         ))}

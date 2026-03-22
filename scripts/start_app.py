@@ -7,7 +7,8 @@ import time
 from pathlib import Path
 
 import typer
-from env_utils import load_dotenv
+
+from gym_recommender.config import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 WEB_DIR = ROOT_DIR / "web"
@@ -53,6 +54,12 @@ def _pick_port(host: str, preferred: int) -> int:
     while not _port_available(host, port):
         port += 1
     return port
+
+
+def _wait_for_exit(process: subprocess.Popen[str]) -> int:
+    while process.poll() is None:
+        time.sleep(1)
+    return process.poll() or 0
 
 
 def _ensure_web_dependencies_installed() -> None:
@@ -172,10 +179,32 @@ def fullstack(
     typer.echo(f"Web UI starting at http://127.0.0.1:{frontend_port}")
     typer.echo("Press Ctrl+C to stop both services.")
 
+    api_process = processes[0]
+    web_process = processes[1]
+
     try:
         while True:
-            if any(process.poll() is not None for process in processes):
+            api_exit = api_process.poll()
+            web_exit = web_process.poll()
+
+            if api_exit is not None:
+                if web_exit is None:
+                    typer.echo("API process exited. Stopping the web UI.")
                 break
+
+            if web_exit is not None:
+                typer.echo(
+                    "Web UI process exited, but the API will keep running in reload mode."
+                )
+                typer.echo(
+                    "The current Node.js binary looks incompatible with this macOS version. "
+                    "Install an older Node release, then rerun `uv run python scripts/start_app.py fullstack`."
+                )
+                typer.echo(f"API still available at {api_base_url}")
+                typer.echo("Press Ctrl+C to stop the API watcher.")
+                _wait_for_exit(api_process)
+                break
+
             time.sleep(1)
     except KeyboardInterrupt:
         typer.echo("\nStopping services...")

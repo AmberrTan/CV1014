@@ -89,6 +89,14 @@ export function AdminForm({ gyms }: { gyms: Gym[] }) {
     }
   }, [gyms, mode, selectedId]);
 
+  function selectGym(gymId: number) {
+    setSelectedId(gymId);
+    const gym = gyms.find((item) => item.gym_id === gymId);
+    if (gym) {
+      setForm(gymToEditable(gym));
+    }
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -127,36 +135,7 @@ export function AdminForm({ gyms }: { gyms: Gym[] }) {
           <select
             id="gym-select"
             value={selectedId}
-            onChange={(event) => {
-              const nextId = Number(event.target.value);
-              setSelectedId(nextId);
-              const gym = gyms.find((item) => item.gym_id === nextId);
-              if (gym) {
-                setForm({
-                  gym_name: gym.gym_name,
-                  area: gym.area,
-                  address: gym.address,
-                  x_coordinate: gym.x_coordinate,
-                  y_coordinate: gym.y_coordinate,
-                  monthly_price: gym.monthly_price,
-                  day_pass_price: gym.day_pass_price,
-                  rating: gym.rating,
-                  opening_time: gym.opening_time,
-                  closing_time: gym.closing_time,
-                  is_24_hours: gym.is_24_hours,
-                  gym_type: gym.gym_type,
-                  facilities: gym.facilities,
-                  beginner_friendly: gym.beginner_friendly,
-                  female_friendly: gym.female_friendly,
-                  student_discount: gym.student_discount,
-                  peak_crowd_level: gym.peak_crowd_level,
-                  parking_available: gym.parking_available,
-                  near_mrt: gym.near_mrt,
-                  trainer_available: gym.trainer_available,
-                  classes_available: gym.classes_available,
-                });
-              }
-            }}
+            onChange={(event) => selectGym(Number(event.target.value))}
           >
             {gyms.map((gym) => (
               <option key={gym.gym_id} value={gym.gym_id}>

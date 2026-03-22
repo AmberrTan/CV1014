@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,9 +19,15 @@ from gym_recommender.services import (
 
 app = FastAPI(title="Gym Recommendation API", version="0.1.0")
 
+
+def _allowed_cors_origins() -> list[str]:
+    configured_origins = os.getenv("CORS_ALLOW_ORIGINS", "")
+    return [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_allowed_cors_origins(),
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

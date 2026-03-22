@@ -19,11 +19,7 @@ def list_gyms() -> list[GymRecord]:
 
 
 def get_gym_by_id(gym_id: int) -> GymRecord | None:
-    gyms = load_database()
-    for gym in gyms:
-        if gym["gym_id"] == gym_id:
-            return gym
-    return None
+    return next((gym for gym in load_database() if gym["gym_id"] == gym_id), None)
 
 
 def serialize_gym(

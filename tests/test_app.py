@@ -208,6 +208,34 @@ class GymSystemTests(unittest.TestCase):
         self.assertIn("distance", payload[0])
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
+    def test_api_search_preflight_allows_localhost_origin(self) -> None:
+        client = TestClient(app)
+        response = client.options(
+            "/api/search",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["access-control-allow-origin"], "http://localhost:3000")
+
+    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
+    def test_api_search_preflight_allows_loopback_origin_with_dynamic_port(self) -> None:
+        client = TestClient(app)
+        response = client.options(
+            "/api/search",
+            headers={
+                "Origin": "http://127.0.0.1:3001",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["access-control-allow-origin"], "http://127.0.0.1:3001")
+
+    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_rejects_invalid_open_time(self) -> None:
         client = TestClient(app)
         response = client.post("/api/search", json={"open_at": 2500})

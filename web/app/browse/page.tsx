@@ -50,23 +50,23 @@ export default function BrowsePage() {
     <main className="shell section">
       <div className="panel">
         <div className="eyebrow">Browse</div>
-        <h1 style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}>Search and sort gyms</h1>
-        <p>Filter by area, budget, facilities, and sort order, then review the matching gyms.</p>
-        <form
-          onSubmit={handleSubmit}
-          className="toolbar"
-          style={{ marginTop: 18 }}
-        >
+        <h1 style={{ fontSize: "clamp(2rem, 5vw, 4rem)", marginBottom: 12 }}>Search and sort gyms</h1>
+        <p style={{ maxWidth: "60ch", marginBottom: 32 }}>
+          Filter by area, budget, facilities, and sort order, then review the matching gyms from our
+          curated database.
+        </p>
+
+        <form onSubmit={handleSubmit} className="toolbar">
           <div className="field">
             <label htmlFor="browse-area">Area</label>
-            <input id="browse-area" name="area" placeholder="Jurong East" />
+            <input id="browse-area" name="area" placeholder="e.g. Jurong East" />
           </div>
           <div className="field">
-            <label htmlFor="browse-max-budget">Max budget</label>
+            <label htmlFor="browse-max-budget">Max budget ($)</label>
             <input id="browse-max-budget" name="max_budget" type="number" placeholder="120" />
           </div>
           <div className="field">
-            <label htmlFor="browse-min-rating">Minimum rating</label>
+            <label htmlFor="browse-min-rating">Min rating (0-5)</label>
             <input
               id="browse-min-rating"
               name="min_rating"
@@ -79,44 +79,54 @@ export default function BrowsePage() {
           </div>
           <div className="field">
             <label htmlFor="browse-gym-type">Gym type</label>
-            <input id="browse-gym-type" name="gym_type" placeholder="commercial" />
+            <select id="browse-gym-type" name="gym_type" defaultValue="">
+              <option value="">Any type</option>
+              <option value="commercial">Commercial</option>
+              <option value="boutique">Boutique</option>
+              <option value="community">Community</option>
+            </select>
           </div>
           <div className="field">
-            <label htmlFor="browse-required-facilities">Facilities</label>
+            <label htmlFor="browse-required-facilities">Facilities (comma-separated)</label>
             <input
               id="browse-required-facilities"
               name="required_facilities"
-              placeholder="cardio, shower"
+              placeholder="cardio, shower, pool"
             />
           </div>
           <div className="field">
             <label htmlFor="browse-sort-key">Sort by</label>
             <select id="browse-sort-key" name="sort_key" defaultValue="none">
-              <option value="none">None</option>
+              <option value="none">Default</option>
               <option value="price">Lowest price</option>
               <option value="rating">Highest rating</option>
-              <option value="distance">Distance</option>
+              <option value="distance">Nearest distance</option>
               <option value="score">Match score</option>
             </select>
           </div>
-          <div className="field">
-            <label htmlFor="browse-user-x">User X</label>
+          <div className="field" style={{ gridColumn: "span 1" }}>
+            <label htmlFor="browse-user-x">User X (Loc)</label>
             <input id="browse-user-x" name="user_x" type="number" placeholder="10" />
           </div>
-          <div className="field">
-            <label htmlFor="browse-user-y">User Y</label>
+          <div className="field" style={{ gridColumn: "span 1" }}>
+            <label htmlFor="browse-user-y">User Y (Loc)</label>
             <input id="browse-user-y" name="user_y" type="number" placeholder="30" />
           </div>
-          <button className="button" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting ? "Searching..." : "Search gyms"}
-          </button>
+          <div style={{ gridColumn: "1 / -1", marginTop: 12 }}>
+            <button className="button" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? "Searching..." : "Search matching gyms"}
+            </button>
+          </div>
         </form>
-        <p className="notice" data-tone={statusTone} style={{ marginTop: 18 }} aria-live="polite">
-          {status}
-        </p>
+
+        {status ? (
+          <p className="notice" data-tone={statusTone} style={{ marginTop: 24 }} aria-live="polite">
+            {status}
+          </p>
+        ) : null}
       </div>
 
-      <div className="grid cards" style={{ marginTop: 24 }}>
+      <div className="grid cards" style={{ marginTop: 40 }}>
         {results.map((gym) => (
           <GymCard key={gym.gym_id} gym={gym} />
         ))}

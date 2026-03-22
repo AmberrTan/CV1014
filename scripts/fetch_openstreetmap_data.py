@@ -6,13 +6,17 @@ from pathlib import Path
 
 from gym_recommender.config import load_dotenv
 from gym_recommender.data import DEFAULT_DATABASE_PATH
-from gym_recommender.google_maps_enrichment import enrich_database
+from gym_recommender.openstreetmap_enrichment import (
+    DEFAULT_COUNTRY_HINT,
+    DEFAULT_USER_AGENT,
+    enrich_database,
+)
 
 
 def parse_args() -> argparse.Namespace:
     load_dotenv()
     parser = argparse.ArgumentParser(
-        description="Fetch extra Google Maps place data for the gyms JSON database."
+        description="Fetch extra OpenStreetMap place data for the gyms JSON database."
     )
     parser.add_argument(
         "--input",
@@ -27,18 +31,23 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--country-hint",
-        default="Singapore",
+        default=os.environ.get("OSM_COUNTRY_HINT", DEFAULT_COUNTRY_HINT),
         help="Extra location text added to each search query.",
     )
     parser.add_argument(
-        "--api-key",
-        default=os.environ.get("GOOGLE_MAPS_API_KEY"),
-        help="Google Maps API key. Defaults to GOOGLE_MAPS_API_KEY.",
+        "--user-agent",
+        default=os.environ.get("NOMINATIM_USER_AGENT", DEFAULT_USER_AGENT),
+        help="Required User-Agent for Nominatim requests.",
+    )
+    parser.add_argument(
+        "--email",
+        default=os.environ.get("NOMINATIM_EMAIL"),
+        help="Optional contact email passed to Nominatim.",
     )
     parser.add_argument(
         "--refresh",
         action="store_true",
-        help="Refresh entries that already contain a google_maps block.",
+        help="Refresh entries that already contain an openstreetmap block.",
     )
     parser.add_argument(
         "--limit",
@@ -48,25 +57,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--throttle-seconds",
         type=float,
-        default=0.2,
-        help="Delay between API calls to keep request bursts modest.",
+        default=float(os.environ.get("OSM_THROTTLE_SECONDS", "1.1")),
+        help="Delay between requests. Keep this at or above 1 second for the public Nominatim instance.",
     )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if not args.api_key:
-        raise SystemExit("Missing API key. Pass --api-key or set GOOGLE_MAPS_API_KEY.")
+    if not args.user_agent:
+        raise SystemExit("Missing User-Agent. Pass --user-agent or set NOMINATIM_USER_AGENT.")
 
     _, results = enrich_database(
-        api_key=args.api_key,
         input_path=args.input,
         output_path=args.output,
         country_hint=args.country_hint,
         refresh_existing=args.refresh,
         max_records=args.limit,
         throttle_seconds=args.throttle_seconds,
+        user_agent=args.user_agent,
+        email=args.email,
     )
 
     matched_count = sum(1 for result in results if result.matched)
