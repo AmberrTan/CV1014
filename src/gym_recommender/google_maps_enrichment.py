@@ -7,11 +7,11 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib import error, parse, request
 
 from gym_recommender.data import DEFAULT_DATABASE_PATH, load_database
-from gym_recommender.models import GymRecord
+from gym_recommender.models import GoogleMapsData, GymRecord
 
 TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 PLACE_DETAILS_URL_TEMPLATE = "https://places.googleapis.com/v1/places/{place_id}"
@@ -68,7 +68,9 @@ def build_text_search_query(gym: GymRecord, country_hint: str = "Singapore") -> 
     return ", ".join(part.strip() for part in query_parts if part and part.strip())
 
 
-def _post_json(url: str, payload: dict[str, Any], *, api_key: str, field_mask: str) -> dict[str, Any]:
+def _post_json(
+    url: str, payload: dict[str, Any], *, api_key: str, field_mask: str
+) -> dict[str, Any]:
     """Send a JSON POST request to the Google Places API."""
     encoded_payload = json.dumps(payload).encode("utf-8")
     http_request = request.Request(
@@ -133,9 +135,13 @@ def fetch_place_details(place_id: str, *, api_key: str) -> dict[str, Any]:
     )
 
 
-def build_google_maps_payload(search_match: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
+def build_google_maps_payload(
+    search_match: dict[str, Any], details: dict[str, Any]
+) -> GoogleMapsData:
     """Normalize Google Places responses into the project's schema."""
-    chosen_name = details.get("displayName", {}).get("text") or search_match.get("displayName", {}).get("text")
+    chosen_name = details.get("displayName", {}).get("text") or search_match.get(
+        "displayName", {}
+    ).get("text")
     chosen_address = details.get("formattedAddress") or search_match.get("formattedAddress")
     chosen_location = details.get("location") or search_match.get("location") or {}
     chosen_types = details.get("types") or search_match.get("types") or []
@@ -157,16 +163,18 @@ def build_google_maps_payload(search_match: dict[str, Any], details: dict[str, A
         "rating": details.get("rating"),
         "user_rating_count": details.get("userRatingCount"),
         "open_now": details.get("regularOpeningHours", {}).get("openNow"),
-        "weekday_descriptions": details.get("regularOpeningHours", {}).get("weekdayDescriptions", []),
+        "weekday_descriptions": details.get("regularOpeningHours", {}).get(
+            "weekdayDescriptions", []
+        ),
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
-def merge_google_maps_data(gym: GymRecord, google_maps_payload: dict[str, Any]) -> GymRecord:
+def merge_google_maps_data(gym: GymRecord, google_maps_payload: GoogleMapsData) -> GymRecord:
     """Return a gym record with Google Maps enrichment attached."""
     merged = dict(gym)
     merged["google_maps"] = google_maps_payload
-    return merged
+    return cast(GymRecord, merged)
 
 
 def enrich_database(
@@ -187,7 +195,7 @@ def enrich_database(
 
     for gym in gyms:
         if max_records is not None and processed >= max_records:
-            updated_gyms.append(dict(gym))
+            updated_gyms.append(cast(GymRecord, dict(gym)))
             results.append(
                 EnrichmentResult(
                     gym_id=gym["gym_id"],
@@ -198,7 +206,7 @@ def enrich_database(
             continue
 
         if gym.get("google_maps") and not refresh_existing:
-            updated_gyms.append(dict(gym))
+            updated_gyms.append(cast(GymRecord, dict(gym)))
             results.append(
                 EnrichmentResult(
                     gym_id=gym["gym_id"],
@@ -213,7 +221,7 @@ def enrich_database(
         processed += 1
 
         if not match or not match.get("id"):
-            updated_gyms.append(dict(gym))
+            updated_gyms.append(cast(GymRecord, dict(gym)))
             results.append(
                 EnrichmentResult(
                     gym_id=gym["gym_id"],

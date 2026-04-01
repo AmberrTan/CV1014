@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 
 from gym_recommender.config import load_dotenv
-from gym_recommender.osm_import import OVERPASS_API_URL, import_osm_gyms
 from gym_recommender.openstreetmap_enrichment import DEFAULT_USER_AGENT
+from gym_recommender.osm_import import OVERPASS_API_URL, import_osm_gyms
 
 
 def parse_args() -> argparse.Namespace:

@@ -58,7 +58,10 @@ def parse_args() -> argparse.Namespace:
         "--throttle-seconds",
         type=float,
         default=float(os.environ.get("OSM_THROTTLE_SECONDS", "1.1")),
-        help="Delay between requests. Keep this at or above 1 second for the public Nominatim instance.",
+        help=(
+            "Delay between requests. Keep this at or above 1 second for the public "
+            "Nominatim instance."
+        ),
     )
     return parser.parse_args()
 

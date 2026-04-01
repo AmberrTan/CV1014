@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from gym_recommender.data import generate_next_gym_id, load_database, save_database
 from gym_recommender.models import GymRecord, SearchFilters, UserPreferences
-from gym_recommender.recommendation import build_recommendation_reason, calculate_match_score, recommend_gyms
+from gym_recommender.recommendation import (
+    build_recommendation_reason,
+    calculate_match_score,
+    recommend_gyms,
+)
 from gym_recommender.search import calculate_distance, search_gyms, sort_gyms
 
 
@@ -35,7 +39,7 @@ def serialize_gym(
     reason: str | None = None,
 ) -> dict[str, Any]:
     """Build the API response payload for a gym record."""
-    payload: dict[str, Any] = dict(gym)
+    payload: dict[str, Any] = dict(cast(dict[str, Any], gym))
     payload["display_hours"] = _format_display_hours(gym)
     if user_x is not None and user_y is not None:
         payload["distance"] = round(
@@ -137,7 +141,9 @@ def recommend_gym_records(prefs: UserPreferences) -> list[dict[str, Any]]:
     ]
 
 
-def compare_gym_records(gym_ids: list[int], prefs: UserPreferences | None = None) -> list[dict[str, Any]]:
+def compare_gym_records(
+    gym_ids: list[int], prefs: UserPreferences | None = None
+) -> list[dict[str, Any]]:
     """Compare 2-3 gyms with optional recommendation scoring."""
     gyms = load_database()
     if len(gym_ids) < 2 or len(gym_ids) > 3:
@@ -172,7 +178,7 @@ def compare_gym_records(gym_ids: list[int], prefs: UserPreferences | None = None
 def create_gym_record(payload: GymRecord) -> dict[str, Any]:
     """Create a new gym record and persist it."""
     gyms = load_database()
-    new_record = dict(payload)
+    new_record = cast(GymRecord, dict(payload))
     new_record["gym_id"] = generate_next_gym_id(gyms)
     gyms.append(new_record)
     save_database(gyms)
@@ -184,7 +190,7 @@ def update_gym_record(gym_id: int, payload: GymRecord) -> dict[str, Any] | None:
     gyms = load_database()
     for index, gym in enumerate(gyms):
         if gym["gym_id"] == gym_id:
-            updated_record = dict(payload)
+            updated_record = cast(GymRecord, dict(payload))
             updated_record["gym_id"] = gym_id
             gyms[index] = updated_record
             save_database(gyms)

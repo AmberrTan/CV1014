@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 def _is_valid_hhmm(value: int) -> bool:
     hours, minutes = divmod(value, 100)
-    return 0 <= hours <= 24 and 0 <= minutes <= 59 and value != 2401 and (hours < 24 or minutes == 0)
+    return (
+        0 <= hours <= 24 and 0 <= minutes <= 59 and value != 2401 and (hours < 24 or minutes == 0)
+    )
 
 
 def _validate_time_value(value: int | None, field_name: str) -> int | None:
@@ -18,6 +20,13 @@ def _validate_time_value(value: int | None, field_name: str) -> int | None:
     if not _is_valid_hhmm(value):
         raise ValueError(f"{field_name} must be a valid HHMM time")
     return value
+
+
+def _validate_required_time(value: int, field_name: str) -> int:
+    validated = _validate_time_value(value, field_name)
+    if validated is None:
+        raise ValueError(f"{field_name} must be provided")
+    return validated
 
 
 class PreferenceCoordinatesMixin(BaseModel):
@@ -63,7 +72,7 @@ class GymPayload(BaseModel):
     @field_validator("opening_time", "closing_time")
     @classmethod
     def validate_operating_time(cls, value: int, info) -> int:
-        return _validate_time_value(value, info.field_name)
+        return _validate_required_time(value, info.field_name)
 
     @model_validator(mode="after")
     def validate_hours_window(self) -> "GymPayload":

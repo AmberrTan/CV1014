@@ -7,11 +7,11 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib import error, parse, request
 
 from gym_recommender.data import DEFAULT_DATABASE_PATH, load_database
-from gym_recommender.models import GymRecord
+from gym_recommender.models import GymRecord, OpenStreetMapData
 
 NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
 DEFAULT_COUNTRY_HINT = "Singapore"
@@ -104,7 +104,7 @@ def search_place(
     return results[0]
 
 
-def build_openstreetmap_payload(match: dict[str, Any]) -> dict[str, Any]:
+def build_openstreetmap_payload(match: dict[str, Any]) -> OpenStreetMapData:
     """Normalize an OSM match into the project's enrichment schema."""
     extratags = match.get("extratags", {})
     return {
@@ -129,11 +129,11 @@ def build_openstreetmap_payload(match: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def merge_openstreetmap_data(gym: GymRecord, openstreetmap_payload: dict[str, Any]) -> GymRecord:
+def merge_openstreetmap_data(gym: GymRecord, openstreetmap_payload: OpenStreetMapData) -> GymRecord:
     """Return a gym record with OpenStreetMap enrichment attached."""
     merged = dict(gym)
     merged["openstreetmap"] = openstreetmap_payload
-    return merged
+    return cast(GymRecord, merged)
 
 
 def enrich_database(
@@ -155,7 +155,7 @@ def enrich_database(
 
     for gym in gyms:
         if max_records is not None and processed >= max_records:
-            updated_gyms.append(dict(gym))
+            updated_gyms.append(cast(GymRecord, dict(gym)))
             results.append(
                 OpenStreetMapEnrichmentResult(
                     gym_id=gym["gym_id"],
@@ -166,7 +166,7 @@ def enrich_database(
             continue
 
         if gym.get("openstreetmap") and not refresh_existing:
-            updated_gyms.append(dict(gym))
+            updated_gyms.append(cast(GymRecord, dict(gym)))
             results.append(
                 OpenStreetMapEnrichmentResult(
                     gym_id=gym["gym_id"],
@@ -189,7 +189,7 @@ def enrich_database(
             time.sleep(throttle_seconds)
 
         if not match:
-            updated_gyms.append(dict(gym))
+            updated_gyms.append(cast(GymRecord, dict(gym)))
             results.append(
                 OpenStreetMapEnrichmentResult(
                     gym_id=gym["gym_id"],
@@ -205,7 +205,8 @@ def enrich_database(
                 gym_id=gym["gym_id"],
                 matched=True,
                 message=(
-                    f"Matched OSM {match.get('osm_type')} {match.get('osm_id')} using query: {matched_query}"
+                    f"Matched OSM {match.get('osm_type')} {match.get('osm_id')} using query: "
+                    f"{matched_query}"
                 ),
             )
         )

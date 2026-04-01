@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib import error, parse, request
 
 from gym_recommender.models import GymRecord
@@ -34,7 +34,9 @@ out center tags;
 """.strip()
 
 
-def fetch_overpass_elements(*, country_code: str = "SG", api_url: str = OVERPASS_API_URL) -> list[dict[str, Any]]:
+def fetch_overpass_elements(
+    *, country_code: str = "SG", api_url: str = OVERPASS_API_URL
+) -> list[dict[str, Any]]:
     """Fetch raw elements from Overpass using the configured query."""
     query = build_overpass_query(country_code=country_code)
     encoded = parse.urlencode({"data": query}).encode("utf-8")
@@ -255,7 +257,9 @@ def _infer_rating(tags: dict[str, str]) -> float:
 def _infer_beginner_friendly(name: str, gym_type: str, tags: dict[str, str]) -> bool:
     """Infer whether the gym is beginner friendly."""
     haystack = f"{name.lower()} {tags.get('sport', '').lower()}"
-    if gym_type == "martial arts" or any(keyword in haystack for keyword in ["crossfit", "power", "bodybuilding"]):
+    if gym_type == "martial arts" or any(
+        keyword in haystack for keyword in ["crossfit", "power", "bodybuilding"]
+    ):
         return False
     return True
 
@@ -287,48 +291,55 @@ def _normalize_element(element: dict[str, Any], gym_id: int) -> GymRecord | None
     x_coordinate, y_coordinate = coordinate_to_grid(lat, lon)
     classes_available = _infer_classes_available(gym_type, tags)
 
-    return {
-        "gym_id": gym_id,
-        "gym_name": name,
-        "area": _build_area(tags),
-        "address": _build_address(tags),
-        "x_coordinate": x_coordinate,
-        "y_coordinate": y_coordinate,
-        "monthly_price": monthly_price,
-        "day_pass_price": day_pass_price,
-        "rating": _infer_rating(tags),
-        "opening_time": opening_time,
-        "closing_time": closing_time,
-        "is_24_hours": is_24_hours,
-        "gym_type": gym_type,
-        "facilities": _infer_facilities(name, tags, gym_type),
-        "beginner_friendly": _infer_beginner_friendly(name, gym_type, tags),
-        "female_friendly": gym_type == "women-only" or tags.get("female") in {"yes", "only"},
-        "student_discount": gym_type == "public",
-        "peak_crowd_level": "high" if gym_type in {"commercial", "group training"} else "medium",
-        "parking_available": tags.get("parking") == "yes",
-        "near_mrt": False,
-        "trainer_available": _infer_trainer_available(gym_type),
-        "classes_available": classes_available,
-        "openstreetmap": build_openstreetmap_payload(
-            {
-                "osm_type": element.get("type"),
-                "osm_id": element.get("id"),
-                "place_id": None,
-                "display_name": name,
-                "name": name,
-                "lat": lat,
-                "lon": lon,
-                "category": tags.get("amenity") or tags.get("leisure"),
-                "type": tags.get("sport") or gym_type,
-                "importance": None,
-                "place_rank": None,
-                "address": {key: value for key, value in tags.items() if key.startswith("addr:")},
-                "namedetails": {"name": name},
-                "extratags": tags,
-            }
-        ),
-    }
+    return cast(
+        GymRecord,
+        {
+            "gym_id": gym_id,
+            "gym_name": name,
+            "area": _build_area(tags),
+            "address": _build_address(tags),
+            "x_coordinate": x_coordinate,
+            "y_coordinate": y_coordinate,
+            "monthly_price": monthly_price,
+            "day_pass_price": day_pass_price,
+            "rating": _infer_rating(tags),
+            "opening_time": opening_time,
+            "closing_time": closing_time,
+            "is_24_hours": is_24_hours,
+            "gym_type": gym_type,
+            "facilities": _infer_facilities(name, tags, gym_type),
+            "beginner_friendly": _infer_beginner_friendly(name, gym_type, tags),
+            "female_friendly": gym_type == "women-only" or tags.get("female") in {"yes", "only"},
+            "student_discount": gym_type == "public",
+            "peak_crowd_level": "high"
+            if gym_type in {"commercial", "group training"}
+            else "medium",
+            "parking_available": tags.get("parking") == "yes",
+            "near_mrt": False,
+            "trainer_available": _infer_trainer_available(gym_type),
+            "classes_available": classes_available,
+            "openstreetmap": build_openstreetmap_payload(
+                {
+                    "osm_type": element.get("type"),
+                    "osm_id": element.get("id"),
+                    "place_id": None,
+                    "display_name": name,
+                    "name": name,
+                    "lat": lat,
+                    "lon": lon,
+                    "category": tags.get("amenity") or tags.get("leisure"),
+                    "type": tags.get("sport") or gym_type,
+                    "importance": None,
+                    "place_rank": None,
+                    "address": {
+                        key: value for key, value in tags.items() if key.startswith("addr:")
+                    },
+                    "namedetails": {"name": name},
+                    "extratags": tags,
+                }
+            ),
+        },
+    )
 
 
 def import_osm_gyms(

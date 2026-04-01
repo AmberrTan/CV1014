@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import unittest
+from typing import cast
 
 from gym_recommender.google_maps_enrichment import (
     build_google_maps_payload,
     build_text_search_query,
     merge_google_maps_data,
 )
+from gym_recommender.models import GoogleMapsData, GymRecord
 
 
 class GoogleMapsEnrichmentTests(unittest.TestCase):
@@ -108,7 +110,10 @@ class GoogleMapsEnrichmentTests(unittest.TestCase):
             "classes_available": True,
         }
 
-        merged = merge_google_maps_data(gym, {"place_id": "abc123"})
+        merged = merge_google_maps_data(
+            cast(GymRecord, gym),
+            cast(GoogleMapsData, {"place_id": "abc123"}),
+        )
 
         self.assertEqual(merged["google_maps"]["place_id"], "abc123")
         self.assertEqual(merged["gym_name"], gym["gym_name"])

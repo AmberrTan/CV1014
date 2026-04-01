@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from typing import cast
 
+from gym_recommender.models import GymRecord, OpenStreetMapData
 from gym_recommender.openstreetmap_enrichment import (
     build_openstreetmap_payload,
     build_osm_search_queries,
@@ -139,7 +141,10 @@ class OpenStreetMapEnrichmentTests(unittest.TestCase):
             "classes_available": True,
         }
 
-        merged = merge_openstreetmap_data(gym, {"osm_id": 12345})
+        merged = merge_openstreetmap_data(
+            cast(GymRecord, gym),
+            cast(OpenStreetMapData, {"osm_id": 12345}),
+        )
 
         self.assertEqual(merged["openstreetmap"]["osm_id"], 12345)
         self.assertEqual(merged["gym_name"], gym["gym_name"])

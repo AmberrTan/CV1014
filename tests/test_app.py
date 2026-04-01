@@ -3,18 +3,35 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any, cast
 
 from gym_recommender.data import generate_next_gym_id, load_database, save_database
 from gym_recommender.recommendation import calculate_match_score, recommend_gyms
-from gym_recommender.services import compare_gym_records, search_gym_records
 from gym_recommender.search import calculate_distance, search_gyms, sort_gyms
+from gym_recommender.services import compare_gym_records, search_gym_records
+
+FastAPITestClient: Any
+fastapi_app: Any
 
 try:
-    from fastapi.testclient import TestClient
-    from gym_recommender.api import app
+    from fastapi.testclient import TestClient as _FastAPITestClient
+
+    from gym_recommender.api import app as _fastapi_app
 except Exception:  # pragma: no cover - optional in sandbox without dependency install
-    TestClient = None
-    app = None
+    FastAPITestClient = None
+    fastapi_app = None
+else:
+    FastAPITestClient = _FastAPITestClient
+    fastapi_app = _fastapi_app
+
+TestClient: Any = FastAPITestClient
+app: Any = fastapi_app
+
+
+def _create_client() -> Any:
+    if TestClient is None or app is None:
+        raise unittest.SkipTest("fastapi not installed in this environment")
+    return cast(Any, TestClient)(app)
 
 
 FIXTURE_PATH = Path(__file__).resolve().parents[1] / "data" / "gyms.json"
@@ -130,7 +147,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_get_gyms(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.get("/api/gyms")
 
         self.assertEqual(response.status_code, 200)
@@ -138,7 +155,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_recommend(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post(
             "/api/recommend",
             json={
@@ -158,7 +175,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_compare_rejects_duplicate_gym_ids(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/compare", json={"gym_ids": [1, 1]})
 
         self.assertEqual(response.status_code, 400)
@@ -166,7 +183,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_compare_rejects_unknown_gym_ids(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/compare", json={"gym_ids": [1, 999]})
 
         self.assertEqual(response.status_code, 400)
@@ -174,7 +191,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_compare_returns_gyms_in_request_order(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/compare", json={"gym_ids": [3, 1]})
 
         self.assertEqual(response.status_code, 200)
@@ -182,21 +199,21 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_rejects_invalid_sort_key(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/search", json={"sort_key": "nearest"})
 
         self.assertEqual(response.status_code, 422)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_rejects_distance_sort_without_coordinates(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/search", json={"sort_key": "distance"})
 
         self.assertEqual(response.status_code, 422)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_distance_sort_returns_distance(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post(
             "/api/search",
             json={"sort_key": "distance", "user_x": 10, "user_y": 30},
@@ -209,7 +226,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_preflight_allows_localhost_origin(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.options(
             "/api/search",
             headers={
@@ -223,7 +240,7 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_preflight_allows_loopback_origin_with_dynamic_port(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.options(
             "/api/search",
             headers={
@@ -237,21 +254,21 @@ class GymSystemTests(unittest.TestCase):
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_search_rejects_invalid_open_time(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/search", json={"open_at": 2500})
 
         self.assertEqual(response.status_code, 422)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_recommend_rejects_invalid_preferred_time(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post("/api/recommend", json={"preferred_time": 2360})
 
         self.assertEqual(response.status_code, 422)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_create_gym_rejects_invalid_non_24_hour_schedule(self) -> None:
-        client = TestClient(app)
+        client = _create_client()
         response = client.post(
             "/api/gyms",
             json={

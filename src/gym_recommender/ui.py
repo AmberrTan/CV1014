@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any, cast
 
 from gym_recommender.data import generate_next_gym_id, save_database
 from gym_recommender.models import GymRecord, SearchFilters, UserPreferences
@@ -166,8 +167,12 @@ def get_search_filters(input_fn: InputFn = input) -> SearchFilters:
     gym_type = input_fn("Preferred gym type (leave blank for any): ").strip()
     if gym_type:
         filters["gym_type"] = gym_type
-    user_x = prompt_optional_int("Your X coordinate for distance sorting (blank to skip): ", input_fn)
-    user_y = prompt_optional_int("Your Y coordinate for distance sorting (blank to skip): ", input_fn)
+    user_x = prompt_optional_int(
+        "Your X coordinate for distance sorting (blank to skip): ", input_fn
+    )
+    user_y = prompt_optional_int(
+        "Your Y coordinate for distance sorting (blank to skip): ", input_fn
+    )
     if user_x is not None and user_y is not None:
         filters["user_x"] = user_x
         filters["user_y"] = user_y
@@ -209,7 +214,9 @@ def get_user_preferences(input_fn: InputFn = input) -> UserPreferences:
     preferred_time = prompt_optional_int("Preferred workout time as HHMM: ", input_fn)
     if preferred_time is not None:
         prefs["preferred_time"] = preferred_time
-    female_friendly = prompt_yes_no("Need female-friendly environment? (Y/N, blank to skip): ", input_fn)
+    female_friendly = prompt_yes_no(
+        "Need female-friendly environment? (Y/N, blank to skip): ", input_fn
+    )
     if female_friendly is not None:
         prefs["female_friendly"] = female_friendly
     classes_required = prompt_yes_no("Need classes? (Y/N, blank to skip): ", input_fn)
@@ -257,7 +264,9 @@ def run_search_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[Gy
     return matches
 
 
-def run_recommendation_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[tuple[GymRecord, float, str]]:
+def run_recommendation_flow(
+    gyms: list[GymRecord], input_fn: InputFn = input
+) -> list[tuple[GymRecord, float, str]]:
     """Run the interactive recommendation workflow."""
     prefs = get_user_preferences(input_fn)
     recommendations = recommend_gyms(gyms, prefs)
@@ -266,7 +275,7 @@ def run_recommendation_flow(gyms: list[GymRecord], input_fn: InputFn = input) ->
         return []
 
     print("\nTop recommendations:\n")
-    for index, (gym, score, reason) in enumerate(recommendations, start=1):
+    for index, (gym, _score, reason) in enumerate(recommendations, start=1):
         print(f"{index}. {gym_summary_line(gym)}")
         print(f"   Reason: {reason}")
         print()
@@ -300,7 +309,9 @@ def select_gyms_by_id(
         return [gym_lookup[gym_id] for gym_id in unique_ids]
 
 
-def _build_comparison_rows(gyms: list[GymRecord], scores: dict[int, float] | None = None) -> list[list[str]]:
+def _build_comparison_rows(
+    gyms: list[GymRecord], scores: dict[int, float] | None = None
+) -> list[list[str]]:
     """Build comparison table rows for display."""
     fields = [
         ("Gym Name", lambda gym: gym["gym_name"]),
@@ -310,14 +321,22 @@ def _build_comparison_rows(gyms: list[GymRecord], scores: dict[int, float] | Non
         ("Rating", lambda gym: f"{gym['rating']:.1f}"),
         (
             "Hours",
-            lambda gym: "24 hours"
-            if gym["is_24_hours"]
-            else f"{format_time(gym['opening_time'], False)}-{format_time(gym['closing_time'], False)}",
+            lambda gym: (
+                "24 hours"
+                if gym["is_24_hours"]
+                else (
+                    f"{format_time(gym['opening_time'], False)}-"
+                    f"{format_time(gym['closing_time'], False)}"
+                )
+            ),
         ),
         ("Gym Type", lambda gym: gym["gym_type"]),
         ("Facilities", lambda gym: ", ".join(gym["facilities"])),
         ("Classes", lambda gym: "Yes" if gym["classes_available"] else "No"),
-        ("Recommendation Score", lambda gym: f"{scores.get(gym['gym_id'], 0.0):.2f}" if scores else "-"),
+        (
+            "Recommendation Score",
+            lambda gym: f"{scores.get(gym['gym_id'], 0.0):.2f}" if scores else "-",
+        ),
     ]
     rows: list[list[str]] = []
     for label, formatter in fields:
@@ -355,16 +374,20 @@ def _collect_gym_details(
     existing: GymRecord | None = None,
 ) -> GymRecord:
     """Prompt for gym details and build a record."""
+    existing_record = cast(dict[str, Any], dict(existing)) if existing else None
+
     def current_value(key: str, fallback: str = "") -> str:
-        if existing is None:
+        if existing_record is None:
             return fallback
-        value = existing[key]
+        value = existing_record.get(key, fallback)
         if isinstance(value, list):
             return ", ".join(value)
         return str(value)
 
     gym_name = (
-        prompt_keep_or_non_empty(existing["gym_name"], f"Gym name [{current_value('gym_name')}]: ", input_fn)
+        prompt_keep_or_non_empty(
+            existing["gym_name"], f"Gym name [{current_value('gym_name')}]: ", input_fn
+        )
         if existing
         else prompt_non_empty("Gym name: ", input_fn)
     )
@@ -374,7 +397,9 @@ def _collect_gym_details(
         else prompt_non_empty("Area: ", input_fn)
     )
     address = (
-        prompt_keep_or_non_empty(existing["address"], f"Address [{current_value('address')}]: ", input_fn)
+        prompt_keep_or_non_empty(
+            existing["address"], f"Address [{current_value('address')}]: ", input_fn
+        )
         if existing
         else prompt_non_empty("Address: ", input_fn)
     )
@@ -388,11 +413,15 @@ def _collect_gym_details(
         input_fn,
     )
     monthly_price = prompt_optional_float(
-        f"Monthly price [{current_value('monthly_price', '0')}]: " if existing else "Monthly price: ",
+        f"Monthly price [{current_value('monthly_price', '0')}]: "
+        if existing
+        else "Monthly price: ",
         input_fn,
     )
     day_pass_price = prompt_optional_float(
-        f"Day pass price [{current_value('day_pass_price', '0')}]: " if existing else "Day pass price: ",
+        f"Day pass price [{current_value('day_pass_price', '0')}]: "
+        if existing
+        else "Day pass price: ",
         input_fn,
     )
     rating = prompt_optional_float(
@@ -400,29 +429,39 @@ def _collect_gym_details(
         input_fn,
     )
     opening_time = prompt_optional_int(
-        f"Opening time HHMM [{current_value('opening_time', '600')}]: " if existing else "Opening time HHMM: ",
+        f"Opening time HHMM [{current_value('opening_time', '600')}]: "
+        if existing
+        else "Opening time HHMM: ",
         input_fn,
     )
     closing_time = prompt_optional_int(
-        f"Closing time HHMM [{current_value('closing_time', '2200')}]: " if existing else "Closing time HHMM: ",
+        f"Closing time HHMM [{current_value('closing_time', '2200')}]: "
+        if existing
+        else "Closing time HHMM: ",
         input_fn,
     )
     is_24_hours = prompt_yes_no(
-        f"24 hours? [{current_value('is_24_hours', 'False')}] (Y/N): " if existing else "24 hours? (Y/N): ",
+        f"24 hours? [{current_value('is_24_hours', 'False')}] (Y/N): "
+        if existing
+        else "24 hours? (Y/N): ",
         input_fn,
         allow_blank=existing is not None,
     )
     facilities_input = input_fn(
-        f"Facilities [{current_value('facilities')}]: " if existing else "Facilities (comma separated): "
+        f"Facilities [{current_value('facilities')}]: "
+        if existing
+        else "Facilities (comma separated): "
     ).strip()
     facilities = (
         [item.strip() for item in facilities_input.split(",") if item.strip()]
         if facilities_input
-        else list(existing["facilities"]) if existing else []
+        else list(existing["facilities"])
+        if existing
+        else []
     )
 
     def bool_value(key: str, label: str) -> bool:
-        default = existing[key] if existing else False
+        default = bool(existing_record.get(key, False)) if existing_record else False
         answer = prompt_yes_no(
             f"{label} [{default}] (Y/N): " if existing else f"{label} (Y/N): ",
             input_fn,
@@ -435,16 +474,28 @@ def _collect_gym_details(
         gym_name=gym_name,
         area=area,
         address=address,
-        x_coordinate=existing["x_coordinate"] if x_coordinate is None and existing else x_coordinate or 0,
-        y_coordinate=existing["y_coordinate"] if y_coordinate is None and existing else y_coordinate or 0,
-        monthly_price=existing["monthly_price"] if monthly_price is None and existing else monthly_price or 0.0,
+        x_coordinate=existing["x_coordinate"]
+        if x_coordinate is None and existing
+        else x_coordinate or 0,
+        y_coordinate=existing["y_coordinate"]
+        if y_coordinate is None and existing
+        else y_coordinate or 0,
+        monthly_price=existing["monthly_price"]
+        if monthly_price is None and existing
+        else monthly_price or 0.0,
         day_pass_price=existing["day_pass_price"]
         if day_pass_price is None and existing
         else day_pass_price or 0.0,
         rating=existing["rating"] if rating is None and existing else rating or 0.0,
-        opening_time=existing["opening_time"] if opening_time is None and existing else opening_time or 0,
-        closing_time=existing["closing_time"] if closing_time is None and existing else closing_time or 2400,
-        is_24_hours=existing["is_24_hours"] if is_24_hours is None and existing else bool(is_24_hours),
+        opening_time=existing["opening_time"]
+        if opening_time is None and existing
+        else opening_time or 0,
+        closing_time=existing["closing_time"]
+        if closing_time is None and existing
+        else closing_time or 2400,
+        is_24_hours=existing["is_24_hours"]
+        if is_24_hours is None and existing
+        else bool(is_24_hours),
         gym_type=input_fn(
             f"Gym type [{current_value('gym_type')}]: " if existing else "Gym type: "
         ).strip()

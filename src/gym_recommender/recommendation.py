@@ -24,7 +24,9 @@ def passes_hard_filters(gym: GymRecord, prefs: UserPreferences) -> bool:
     if "preferred_time" in prefs and not is_open_at(gym, prefs["preferred_time"]):
         return False
 
-    requested_facilities = {facility.casefold() for facility in prefs.get("preferred_facilities", [])}
+    requested_facilities = {
+        facility.casefold() for facility in prefs.get("preferred_facilities", [])
+    }
     gym_facilities = {facility.casefold() for facility in gym["facilities"]}
     return requested_facilities.issubset(gym_facilities)
 
@@ -118,7 +120,9 @@ def build_recommendation_reason(gym: GymRecord, prefs: UserPreferences, score: f
         reasons.append("has classes")
     if prefs.get("female_friendly") and gym["female_friendly"]:
         reasons.append("female-friendly")
-    preferred_facilities = {facility.casefold() for facility in prefs.get("preferred_facilities", [])}
+    preferred_facilities = {
+        facility.casefold() for facility in prefs.get("preferred_facilities", [])
+    }
     available_facilities = {facility.casefold() for facility in gym["facilities"]}
     matched_facilities = sorted(preferred_facilities & available_facilities)
     if matched_facilities:

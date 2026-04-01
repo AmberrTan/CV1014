@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import os
+from typing import Any, cast
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from gym_recommender.api_models import CompareRequest, GymPayload, RecommendationRequest, SearchRequest
+from gym_recommender.api_models import (
+    CompareRequest,
+    GymPayload,
+    RecommendationRequest,
+    SearchRequest,
+)
+from gym_recommender.models import GymRecord
 from gym_recommender.services import (
     compare_gym_records,
     create_gym_record,
@@ -27,8 +34,9 @@ def _allowed_cors_origins() -> list[str]:
     configured_origins = os.getenv("CORS_ALLOW_ORIGINS", "")
     return [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
 
+
 app.add_middleware(
-    CORSMiddleware,
+    cast(Any, CORSMiddleware),
     allow_origins=_allowed_cors_origins(),
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
@@ -97,7 +105,8 @@ def create_gym(payload: GymPayload) -> dict[str, object]:
 @app.put("/api/gyms/{gym_id}")
 def update_gym(gym_id: int, payload: GymPayload) -> dict[str, object]:
     """Replace a gym record by ID."""
-    updated = update_gym_record(gym_id, {"gym_id": gym_id, **payload.model_dump()})
+    gym_payload = cast(GymRecord, {"gym_id": gym_id, **payload.model_dump()})
+    updated = update_gym_record(gym_id, gym_payload)
     if updated is None:
         raise HTTPException(status_code=404, detail="Gym not found")
     return updated

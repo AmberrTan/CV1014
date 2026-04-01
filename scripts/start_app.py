@@ -82,10 +82,10 @@ def _ensure_localstorage_file(node_options: str | None) -> str:
 def _ensure_command_exists(command: str, install_hint: str) -> None:
     try:
         subprocess.run([command, "--version"], capture_output=True, text=True, check=False)
-    except FileNotFoundError:
+    except FileNotFoundError as exc:
         typer.echo(f"'{command}' is not available on your PATH.")
         typer.echo(install_hint)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from exc
 
 
 @app.command()
@@ -204,12 +204,11 @@ def fullstack(
                 break
 
             if web_exit is not None:
-                typer.echo(
-                    "Web UI process exited, but the API will keep running in reload mode."
-                )
+                typer.echo("Web UI process exited, but the API will keep running in reload mode.")
                 typer.echo(
                     "The current Node.js binary looks incompatible with this macOS version. "
-                    "Install an older Node release, then rerun `uv run python scripts/start_app.py fullstack`."
+                    "Install an older Node release, then rerun "
+                    "`uv run python scripts/start_app.py fullstack`."
                 )
                 typer.echo(f"API still available at {api_base_url}")
                 typer.echo("Press Ctrl+C to stop the API watcher.")
