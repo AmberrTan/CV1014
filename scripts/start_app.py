@@ -70,6 +70,15 @@ def _ensure_web_dependencies_installed() -> None:
     raise typer.Exit(1)
 
 
+def _ensure_localstorage_file(node_options: str | None) -> str:
+    storage_flag = "--localstorage-file=/tmp/node-localstorage.json"
+    if not node_options:
+        return storage_flag
+    if "--localstorage-file" in node_options:
+        return node_options
+    return f"{node_options} {storage_flag}"
+
+
 def _ensure_command_exists(command: str, install_hint: str) -> None:
     try:
         subprocess.run([command, "--version"], capture_output=True, text=True, check=False)
@@ -121,6 +130,7 @@ def web(
     _ensure_web_dependencies_installed()
     env = os.environ.copy()
     env["NEXT_PUBLIC_API_BASE_URL"] = api_base_url
+    env["NODE_OPTIONS"] = _ensure_localstorage_file(env.get("NODE_OPTIONS"))
     actual_port = _pick_port("127.0.0.1", port)
     if actual_port != port:
         typer.echo(f"Port {port} is in use for the web UI. Using {actual_port} instead.")
@@ -152,6 +162,7 @@ def fullstack(
     env = os.environ.copy()
     api_base_url = f"http://{host}:{api_port}"
     env["NEXT_PUBLIC_API_BASE_URL"] = api_base_url
+    env["NODE_OPTIONS"] = _ensure_localstorage_file(env.get("NODE_OPTIONS"))
 
     processes = [
         _spawn(
