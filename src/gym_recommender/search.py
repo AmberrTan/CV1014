@@ -1,3 +1,5 @@
+"""Search and sorting utilities for gym records."""
+
 from __future__ import annotations
 
 import math
@@ -6,21 +8,26 @@ from gym_recommender.models import GymRecord, SearchFilters
 
 
 def calculate_distance(user_x: int, user_y: int, gym_x: int, gym_y: int) -> float:
+    """Return Euclidean distance in the dataset's coordinate space."""
     return math.sqrt((gym_x - user_x) ** 2 + (gym_y - user_y) ** 2)
 
 
 def is_open_at(gym: GymRecord, time_value: int) -> bool:
+    """Return True if a gym is open at the given HHMM time."""
     if gym["is_24_hours"]:
         return True
     return gym["opening_time"] <= time_value <= gym["closing_time"]
 
 
 def search_gyms(gyms: list[GymRecord], filters: SearchFilters) -> list[GymRecord]:
+    """Filter gyms based on the supplied search filters."""
     matches: list[GymRecord] = []
-    required_facilities = [item.casefold() for item in filters.get("required_facilities", [])]
+    required_facilities = {item.casefold() for item in filters.get("required_facilities", [])}
+    target_area = filters.get("area")
+    target_gym_type = filters.get("gym_type")
 
     for gym in gyms:
-        if filters.get("area") and gym["area"].casefold() != filters["area"].casefold():
+        if target_area and gym["area"].casefold() != target_area.casefold():
             continue
         if "max_budget" in filters and gym["monthly_price"] > filters["max_budget"]:
             continue
@@ -34,11 +41,11 @@ def search_gyms(gyms: list[GymRecord], filters: SearchFilters) -> list[GymRecord
             continue
         if "female_friendly" in filters and gym["female_friendly"] is not filters["female_friendly"]:
             continue
-        if filters.get("gym_type") and gym["gym_type"].casefold() != filters["gym_type"].casefold():
+        if target_gym_type and gym["gym_type"].casefold() != target_gym_type.casefold():
             continue
 
         gym_facilities = {facility.casefold() for facility in gym["facilities"]}
-        if any(facility not in gym_facilities for facility in required_facilities):
+        if not required_facilities.issubset(gym_facilities):
             continue
 
         matches.append(gym)
@@ -53,6 +60,7 @@ def sort_gyms(
     user_y: int | None = None,
     scored_gyms: dict[int, float] | None = None,
 ) -> list[GymRecord]:
+    """Sort gyms by a requested key while preserving deterministic tie breaks."""
     if sort_key == "price":
         return sorted(gyms, key=lambda gym: (gym["monthly_price"], -gym["rating"]))
     if sort_key == "rating":

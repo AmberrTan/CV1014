@@ -1,3 +1,5 @@
+"""OpenStreetMap enrichment helpers for gym records."""
+
 from __future__ import annotations
 
 import json
@@ -18,12 +20,15 @@ DEFAULT_USER_AGENT = "CV1014-GymRecommendationSystem/1.0 (+https://openstreetmap
 
 @dataclass
 class OpenStreetMapEnrichmentResult:
+    """Result message for a single OSM enrichment attempt."""
+
     gym_id: int
     matched: bool
     message: str
 
 
 def build_osm_search_query(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_HINT) -> str:
+    """Build a search string for the OSM Nominatim API."""
     query_parts = [gym["gym_name"]]
     if gym.get("address"):
         query_parts.append(gym["address"])
@@ -35,6 +40,7 @@ def build_osm_search_query(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_H
 
 
 def build_osm_search_queries(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_HINT) -> list[str]:
+    """Return de-duplicated query variants for better matching."""
     query_variants = [
         [gym["gym_name"], gym.get("address"), gym.get("area"), country_hint],
         [gym["gym_name"], gym.get("area"), country_hint],
@@ -53,6 +59,7 @@ def build_osm_search_queries(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY
 
 
 def _read_json(url: str, *, user_agent: str) -> list[dict[str, Any]]:
+    """Fetch a JSON payload from Nominatim."""
     http_request = request.Request(
         url,
         headers={
@@ -78,6 +85,7 @@ def search_place(
     email: str | None = None,
     limit: int = 1,
 ) -> dict[str, Any] | None:
+    """Search for a single OSM place using Nominatim."""
     params = {
         "q": query,
         "format": "jsonv2",
@@ -97,6 +105,7 @@ def search_place(
 
 
 def build_openstreetmap_payload(match: dict[str, Any]) -> dict[str, Any]:
+    """Normalize an OSM match into the project's enrichment schema."""
     extratags = match.get("extratags", {})
     return {
         "osm_type": match.get("osm_type"),
@@ -121,6 +130,7 @@ def build_openstreetmap_payload(match: dict[str, Any]) -> dict[str, Any]:
 
 
 def merge_openstreetmap_data(gym: GymRecord, openstreetmap_payload: dict[str, Any]) -> GymRecord:
+    """Return a gym record with OpenStreetMap enrichment attached."""
     merged = dict(gym)
     merged["openstreetmap"] = openstreetmap_payload
     return merged
@@ -137,6 +147,7 @@ def enrich_database(
     user_agent: str = DEFAULT_USER_AGENT,
     email: str | None = None,
 ) -> tuple[list[GymRecord], list[OpenStreetMapEnrichmentResult]]:
+    """Enrich the database with OpenStreetMap metadata."""
     gyms = load_database(input_path)
     updated_gyms: list[GymRecord] = []
     results: list[OpenStreetMapEnrichmentResult] = []

@@ -1,3 +1,5 @@
+"""Service-layer orchestration for API and console flows."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -15,10 +17,12 @@ def _require_distance_coordinates(user_x: int | None, user_y: int | None) -> tup
 
 
 def list_gyms() -> list[GymRecord]:
+    """Return all gyms from the current database."""
     return load_database()
 
 
 def get_gym_by_id(gym_id: int) -> GymRecord | None:
+    """Return the gym record with a matching ID, if any."""
     return next((gym for gym in load_database() if gym["gym_id"] == gym_id), None)
 
 
@@ -30,10 +34,9 @@ def serialize_gym(
     score: float | None = None,
     reason: str | None = None,
 ) -> dict[str, Any]:
+    """Build the API response payload for a gym record."""
     payload: dict[str, Any] = dict(gym)
-    payload["display_hours"] = (
-        "24 hours" if gym["is_24_hours"] else f"{gym['opening_time']:04d}-{gym['closing_time']:04d}"
-    )
+    payload["display_hours"] = _format_display_hours(gym)
     if user_x is not None and user_y is not None:
         payload["distance"] = round(
             calculate_distance(user_x, user_y, gym["x_coordinate"], gym["y_coordinate"]),
@@ -46,7 +49,15 @@ def serialize_gym(
     return payload
 
 
+def _format_display_hours(gym: GymRecord) -> str:
+    """Return a compact opening hours string for the UI."""
+    if gym["is_24_hours"]:
+        return "24 hours"
+    return f"{gym['opening_time']:04d}-{gym['closing_time']:04d}"
+
+
 def _search_preferences(filters: SearchFilters) -> UserPreferences:
+    """Translate search filters into recommendation preferences."""
     prefs: UserPreferences = {}
     if "area" in filters:
         prefs["preferred_area"] = filters["area"]
@@ -71,6 +82,7 @@ def _search_preferences(filters: SearchFilters) -> UserPreferences:
 
 
 def search_gym_records(filters: SearchFilters, sort_key: str = "none") -> list[dict[str, Any]]:
+    """Search and return serialized gym records for API responses."""
     gyms = load_database()
     matches = search_gyms(gyms, filters)
     scored_gyms: dict[int, float] | None = None
@@ -110,6 +122,7 @@ def search_gym_records(filters: SearchFilters, sort_key: str = "none") -> list[d
 
 
 def recommend_gym_records(prefs: UserPreferences) -> list[dict[str, Any]]:
+    """Return serialized recommendation payloads."""
     gyms = load_database()
     recommendations = recommend_gyms(gyms, prefs)
     return [
@@ -125,6 +138,7 @@ def recommend_gym_records(prefs: UserPreferences) -> list[dict[str, Any]]:
 
 
 def compare_gym_records(gym_ids: list[int], prefs: UserPreferences | None = None) -> list[dict[str, Any]]:
+    """Compare 2-3 gyms with optional recommendation scoring."""
     gyms = load_database()
     if len(gym_ids) < 2 or len(gym_ids) > 3:
         raise ValueError("Please compare 2 or 3 gyms")
@@ -156,6 +170,7 @@ def compare_gym_records(gym_ids: list[int], prefs: UserPreferences | None = None
 
 
 def create_gym_record(payload: GymRecord) -> dict[str, Any]:
+    """Create a new gym record and persist it."""
     gyms = load_database()
     new_record = dict(payload)
     new_record["gym_id"] = generate_next_gym_id(gyms)
@@ -165,6 +180,7 @@ def create_gym_record(payload: GymRecord) -> dict[str, Any]:
 
 
 def update_gym_record(gym_id: int, payload: GymRecord) -> dict[str, Any] | None:
+    """Replace a gym record with the provided payload."""
     gyms = load_database()
     for index, gym in enumerate(gyms):
         if gym["gym_id"] == gym_id:

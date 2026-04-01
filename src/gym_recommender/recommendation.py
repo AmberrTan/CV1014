@@ -1,3 +1,5 @@
+"""Recommendation scoring and explanation helpers."""
+
 from __future__ import annotations
 
 from gym_recommender.models import GymRecord, UserPreferences
@@ -7,6 +9,7 @@ MAX_DISTANCE = 120.0
 
 
 def passes_hard_filters(gym: GymRecord, prefs: UserPreferences) -> bool:
+    """Return True when a gym satisfies non-negotiable preference filters."""
     preferred_area = prefs.get("preferred_area")
     if preferred_area and gym["area"].casefold() != preferred_area.casefold():
         return False
@@ -27,10 +30,12 @@ def passes_hard_filters(gym: GymRecord, prefs: UserPreferences) -> bool:
 
 
 def _rating_score(gym: GymRecord) -> float:
+    """Normalize rating to a 0-1 scale."""
     return gym["rating"] / 5
 
 
 def _price_score(gym: GymRecord, prefs: UserPreferences) -> float:
+    """Score price based on remaining budget headroom."""
     budget = prefs.get("max_budget")
     if budget is None or budget <= 0:
         return 0.6
@@ -39,6 +44,7 @@ def _price_score(gym: GymRecord, prefs: UserPreferences) -> float:
 
 
 def _distance_score(gym: GymRecord, prefs: UserPreferences) -> float:
+    """Score distance using the shared coordinate grid."""
     if "user_x" not in prefs or "user_y" not in prefs:
         return 0.5
     distance = calculate_distance(
@@ -51,6 +57,7 @@ def _distance_score(gym: GymRecord, prefs: UserPreferences) -> float:
 
 
 def _facility_score(gym: GymRecord, prefs: UserPreferences) -> float:
+    """Score based on overlap between requested and available facilities."""
     requested = prefs.get("preferred_facilities", [])
     if not requested:
         return 0.5
@@ -60,6 +67,7 @@ def _facility_score(gym: GymRecord, prefs: UserPreferences) -> float:
 
 
 def _goal_environment_score(gym: GymRecord, prefs: UserPreferences) -> float:
+    """Score how well the gym matches goal, skill level, and gym type."""
     score = 0.4
     fitness_goal = prefs.get("fitness_goal", "").casefold()
     skill_level = prefs.get("skill_level", "").casefold()
@@ -88,6 +96,7 @@ def _goal_environment_score(gym: GymRecord, prefs: UserPreferences) -> float:
 
 
 def calculate_match_score(gym: GymRecord, prefs: UserPreferences) -> float:
+    """Return a weighted recommendation score on a 0-100 scale."""
     total = (
         0.30 * _rating_score(gym)
         + 0.25 * _price_score(gym, prefs)
@@ -99,6 +108,7 @@ def calculate_match_score(gym: GymRecord, prefs: UserPreferences) -> float:
 
 
 def build_recommendation_reason(gym: GymRecord, prefs: UserPreferences, score: float) -> str:
+    """Generate a short explainability string for the recommendation."""
     reasons: list[str] = [f"match score {score:.2f}"]
     if gym["rating"] >= 4.5:
         reasons.append("high rating")
@@ -120,6 +130,7 @@ def recommend_gyms(
     gyms: list[GymRecord],
     prefs: UserPreferences,
 ) -> list[tuple[GymRecord, float, str]]:
+    """Return the top recommendation tuples (gym, score, reason)."""
     recommendations: list[tuple[GymRecord, float, str]] = []
     for gym in gyms:
         if not passes_hard_filters(gym, prefs):

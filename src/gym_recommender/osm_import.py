@@ -1,3 +1,5 @@
+"""Import gyms from OpenStreetMap via the Overpass API."""
+
 from __future__ import annotations
 
 import json
@@ -20,6 +22,7 @@ SINGAPORE_BOUNDS = {
 
 
 def build_overpass_query(*, country_code: str = "SG") -> str:
+    """Build the Overpass QL query for gym amenities."""
     return f"""
 [out:json][timeout:120];
 area["ISO3166-1"="{country_code}"][admin_level=2]->.searchArea;
@@ -32,6 +35,7 @@ out center tags;
 
 
 def fetch_overpass_elements(*, country_code: str = "SG", api_url: str = OVERPASS_API_URL) -> list[dict[str, Any]]:
+    """Fetch raw elements from Overpass using the configured query."""
     query = build_overpass_query(country_code=country_code)
     encoded = parse.urlencode({"data": query}).encode("utf-8")
     http_request = request.Request(
@@ -52,6 +56,7 @@ def fetch_overpass_elements(*, country_code: str = "SG", api_url: str = OVERPASS
 
 
 def coordinate_to_grid(lat: float, lon: float) -> tuple[int, int]:
+    """Normalize lat/lon to the 0-100 grid used by the app."""
     lat_span = SINGAPORE_BOUNDS["max_lat"] - SINGAPORE_BOUNDS["min_lat"]
     lon_span = SINGAPORE_BOUNDS["max_lon"] - SINGAPORE_BOUNDS["min_lon"]
     normalized_x = (lon - SINGAPORE_BOUNDS["min_lon"]) / lon_span
@@ -62,6 +67,7 @@ def coordinate_to_grid(lat: float, lon: float) -> tuple[int, int]:
 
 
 def _get_lat_lon(element: dict[str, Any]) -> tuple[float, float] | None:
+    """Extract lat/lon from Overpass element payloads."""
     if "lat" in element and "lon" in element:
         return float(element["lat"]), float(element["lon"])
     center = element.get("center")
@@ -71,6 +77,7 @@ def _get_lat_lon(element: dict[str, Any]) -> tuple[float, float] | None:
 
 
 def _build_address(tags: dict[str, str]) -> str:
+    """Construct a readable address string from OSM tags."""
     address_parts = [
         tags.get("addr:unit"),
         tags.get("addr:housenumber"),
@@ -84,6 +91,7 @@ def _build_address(tags: dict[str, str]) -> str:
 
 
 def _build_area(tags: dict[str, str]) -> str:
+    """Pick the most specific available area name from tags."""
     return (
         tags.get("addr:suburb")
         or tags.get("addr:city_district")
@@ -101,6 +109,7 @@ def reverse_geocode_area(
     user_agent: str = DEFAULT_USER_AGENT,
     email: str | None = None,
 ) -> str | None:
+    """Reverse geocode a lat/lon into a neighborhood/area name."""
     params = {
         "lat": str(lat),
         "lon": str(lon),
@@ -141,6 +150,7 @@ def reverse_geocode_area(
 
 
 def _infer_gym_type(name: str, tags: dict[str, str]) -> str:
+    """Infer gym type using tags and name keywords."""
     haystack = " ".join(
         filter(
             None,
@@ -166,6 +176,7 @@ def _infer_gym_type(name: str, tags: dict[str, str]) -> str:
 
 
 def _infer_facilities(name: str, tags: dict[str, str], gym_type: str) -> list[str]:
+    """Infer a facility list from tags and gym type."""
     haystack = f"{name.lower()} {tags.get('sport', '').lower()}"
     facilities = {"cardio", "free weights", "machine weights"}
     if tags.get("shower") == "yes":
@@ -188,6 +199,7 @@ def _infer_facilities(name: str, tags: dict[str, str], gym_type: str) -> list[st
 
 
 def _infer_hours(name: str, tags: dict[str, str]) -> tuple[int, int, bool]:
+    """Infer opening hours from tags or name hints."""
     opening_hours = (tags.get("opening_hours") or "").lower()
     lowered_name = name.lower()
     if "24/7" in opening_hours or "24 hours" in lowered_name or "24-hr" in lowered_name:
@@ -202,6 +214,7 @@ def _infer_hours(name: str, tags: dict[str, str]) -> tuple[int, int, bool]:
 
 
 def _parse_hhmm(value: str) -> int | None:
+    """Parse a HH:MM string into an integer HHMM."""
     clean = value.strip()
     if len(clean) != 5 or clean[2] != ":":
         return None
@@ -213,6 +226,7 @@ def _parse_hhmm(value: str) -> int | None:
 
 
 def _infer_prices(gym_type: str) -> tuple[float, float]:
+    """Return default monthly and day-pass prices for a gym type."""
     defaults = {
         "public": (55.0, 2.5),
         "commercial": (120.0, 22.0),
@@ -225,6 +239,7 @@ def _infer_prices(gym_type: str) -> tuple[float, float]:
 
 
 def _infer_rating(tags: dict[str, str]) -> float:
+    """Infer a default rating based on available OSM metadata."""
     score = 4.0
     if tags.get("website") or tags.get("contact:website"):
         score += 0.1
@@ -238,6 +253,7 @@ def _infer_rating(tags: dict[str, str]) -> float:
 
 
 def _infer_beginner_friendly(name: str, gym_type: str, tags: dict[str, str]) -> bool:
+    """Infer whether the gym is beginner friendly."""
     haystack = f"{name.lower()} {tags.get('sport', '').lower()}"
     if gym_type == "martial arts" or any(keyword in haystack for keyword in ["crossfit", "power", "bodybuilding"]):
         return False
@@ -245,15 +261,18 @@ def _infer_beginner_friendly(name: str, gym_type: str, tags: dict[str, str]) -> 
 
 
 def _infer_classes_available(gym_type: str, tags: dict[str, str]) -> bool:
+    """Infer whether classes are likely available."""
     sport = tags.get("sport", "").lower()
     return gym_type in {"boutique", "group training", "martial arts", "women-only"} or bool(sport)
 
 
 def _infer_trainer_available(gym_type: str) -> bool:
+    """Infer trainer availability based on gym type."""
     return gym_type in {"commercial", "boutique", "group training", "martial arts", "women-only"}
 
 
 def _normalize_element(element: dict[str, Any], gym_id: int) -> GymRecord | None:
+    """Convert a raw Overpass element into a GymRecord."""
     tags = element.get("tags", {})
     name = (tags.get("name") or "").strip()
     if not name:
@@ -323,6 +342,7 @@ def import_osm_gyms(
     email: str | None = None,
     output_path: Path | None = None,
 ) -> list[GymRecord]:
+    """Import and normalize gyms from OpenStreetMap."""
     elements = fetch_overpass_elements(country_code=country_code, api_url=api_url)
     normalized: list[GymRecord] = []
     seen: set[tuple[str, int, int]] = set()

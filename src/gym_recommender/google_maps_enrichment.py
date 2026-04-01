@@ -1,3 +1,5 @@
+"""Google Maps enrichment helpers for gym records."""
+
 from __future__ import annotations
 
 import json
@@ -47,12 +49,15 @@ PLACE_DETAILS_FIELDS = ",".join(
 
 @dataclass
 class EnrichmentResult:
+    """Result message for a single Google Maps enrichment attempt."""
+
     gym_id: int
     matched: bool
     message: str
 
 
 def build_text_search_query(gym: GymRecord, country_hint: str = "Singapore") -> str:
+    """Build a Google Places text search query."""
     query_parts = [gym["gym_name"]]
     if gym.get("address"):
         query_parts.append(gym["address"])
@@ -64,6 +69,7 @@ def build_text_search_query(gym: GymRecord, country_hint: str = "Singapore") -> 
 
 
 def _post_json(url: str, payload: dict[str, Any], *, api_key: str, field_mask: str) -> dict[str, Any]:
+    """Send a JSON POST request to the Google Places API."""
     encoded_payload = json.dumps(payload).encode("utf-8")
     http_request = request.Request(
         url,
@@ -79,6 +85,7 @@ def _post_json(url: str, payload: dict[str, Any], *, api_key: str, field_mask: s
 
 
 def _get_json(url: str, *, api_key: str, field_mask: str) -> dict[str, Any]:
+    """Send a JSON GET request to the Google Places API."""
     http_request = request.Request(
         url,
         headers={
@@ -92,6 +99,7 @@ def _get_json(url: str, *, api_key: str, field_mask: str) -> dict[str, Any]:
 
 
 def _read_json(http_request: request.Request) -> dict[str, Any]:
+    """Parse a JSON response from Google APIs."""
     try:
         with request.urlopen(http_request, timeout=30) as response:
             return json.loads(response.read().decode("utf-8"))
@@ -103,6 +111,7 @@ def _read_json(http_request: request.Request) -> dict[str, Any]:
 
 
 def search_place(query: str, *, api_key: str) -> dict[str, Any] | None:
+    """Search for a place using the Google Places text search endpoint."""
     payload = {
         "textQuery": query,
         "pageSize": 1,
@@ -115,6 +124,7 @@ def search_place(query: str, *, api_key: str) -> dict[str, Any] | None:
 
 
 def fetch_place_details(place_id: str, *, api_key: str) -> dict[str, Any]:
+    """Fetch detailed place metadata for a given place ID."""
     encoded_place_id = parse.quote(place_id, safe="")
     return _get_json(
         PLACE_DETAILS_URL_TEMPLATE.format(place_id=encoded_place_id),
@@ -124,6 +134,7 @@ def fetch_place_details(place_id: str, *, api_key: str) -> dict[str, Any]:
 
 
 def build_google_maps_payload(search_match: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
+    """Normalize Google Places responses into the project's schema."""
     chosen_name = details.get("displayName", {}).get("text") or search_match.get("displayName", {}).get("text")
     chosen_address = details.get("formattedAddress") or search_match.get("formattedAddress")
     chosen_location = details.get("location") or search_match.get("location") or {}
@@ -152,6 +163,7 @@ def build_google_maps_payload(search_match: dict[str, Any], details: dict[str, A
 
 
 def merge_google_maps_data(gym: GymRecord, google_maps_payload: dict[str, Any]) -> GymRecord:
+    """Return a gym record with Google Maps enrichment attached."""
     merged = dict(gym)
     merged["google_maps"] = google_maps_payload
     return merged
@@ -167,6 +179,7 @@ def enrich_database(
     max_records: int | None = None,
     throttle_seconds: float = 0.2,
 ) -> tuple[list[GymRecord], list[EnrichmentResult]]:
+    """Enrich the database with Google Maps metadata."""
     gyms = load_database(input_path)
     updated_gyms: list[GymRecord] = []
     results: list[EnrichmentResult] = []

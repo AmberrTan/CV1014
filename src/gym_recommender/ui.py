@@ -1,3 +1,5 @@
+"""Console UI helpers for the gym recommendation system."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -11,6 +13,7 @@ InputFn = Callable[[str], str]
 
 
 def prompt_non_empty(prompt: str, input_fn: InputFn = input) -> str:
+    """Prompt until the user provides a non-empty response."""
     while True:
         value = input_fn(prompt).strip()
         if value:
@@ -19,6 +22,7 @@ def prompt_non_empty(prompt: str, input_fn: InputFn = input) -> str:
 
 
 def prompt_keep_or_non_empty(current: str, prompt: str, input_fn: InputFn = input) -> str:
+    """Prompt until a new or existing value is available."""
     while True:
         value = input_fn(prompt).strip()
         if value:
@@ -29,6 +33,7 @@ def prompt_keep_or_non_empty(current: str, prompt: str, input_fn: InputFn = inpu
 
 
 def prompt_optional_float(prompt: str, input_fn: InputFn = input) -> float | None:
+    """Prompt for a float value or return None if blank."""
     while True:
         value = input_fn(prompt).strip()
         if not value:
@@ -40,6 +45,7 @@ def prompt_optional_float(prompt: str, input_fn: InputFn = input) -> float | Non
 
 
 def prompt_optional_int(prompt: str, input_fn: InputFn = input) -> int | None:
+    """Prompt for an integer value or return None if blank."""
     while True:
         value = input_fn(prompt).strip()
         if not value:
@@ -50,6 +56,7 @@ def prompt_optional_int(prompt: str, input_fn: InputFn = input) -> int | None:
 
 
 def prompt_yes_no(prompt: str, input_fn: InputFn = input, allow_blank: bool = True) -> bool | None:
+    """Prompt for a Y/N answer, optionally allowing blank."""
     while True:
         value = input_fn(prompt).strip().lower()
         if allow_blank and not value:
@@ -62,6 +69,7 @@ def prompt_yes_no(prompt: str, input_fn: InputFn = input, allow_blank: bool = Tr
 
 
 def prompt_list(prompt: str, input_fn: InputFn = input) -> list[str]:
+    """Prompt for a comma-separated list with de-duplication."""
     value = input_fn(prompt).strip()
     if not value:
         return []
@@ -77,6 +85,7 @@ def prompt_list(prompt: str, input_fn: InputFn = input) -> list[str]:
 
 
 def format_time(value: int, is_24_hours: bool) -> str:
+    """Format HHMM integer as a display string."""
     if is_24_hours:
         return "24 hours"
     hours = value // 100
@@ -85,6 +94,7 @@ def format_time(value: int, is_24_hours: bool) -> str:
 
 
 def gym_summary_line(gym: GymRecord) -> str:
+    """Return a one-line summary used in list displays."""
     hours = (
         "24 hours"
         if gym["is_24_hours"]
@@ -104,6 +114,7 @@ def display_gyms(
     user_y: int | None = None,
     scores: dict[int, float] | None = None,
 ) -> None:
+    """Pretty-print a list of gyms with optional distance/score info."""
     if not gyms:
         print("No gyms found.")
         return
@@ -120,11 +131,13 @@ def display_gyms(
 
 
 def display_all_gyms(gyms: list[GymRecord]) -> None:
+    """Print every gym in the dataset."""
     print("\nAll gyms in the database:\n")
     display_gyms(gyms)
 
 
 def get_search_filters(input_fn: InputFn = input) -> SearchFilters:
+    """Prompt for search filters."""
     filters: SearchFilters = {}
     area = input_fn("Area (leave blank for any): ").strip()
     if area:
@@ -162,6 +175,7 @@ def get_search_filters(input_fn: InputFn = input) -> SearchFilters:
 
 
 def get_sort_key(input_fn: InputFn = input) -> str:
+    """Prompt for a sorting choice."""
     options = {"1": "price", "2": "rating", "3": "distance", "4": "score", "5": "none"}
     print("\nSort results by:")
     print("1. Lowest price")
@@ -177,6 +191,7 @@ def get_sort_key(input_fn: InputFn = input) -> str:
 
 
 def get_user_preferences(input_fn: InputFn = input) -> UserPreferences:
+    """Prompt for recommendation preferences."""
     print("\nEnter your preferences for personalized recommendations.")
     prefs: UserPreferences = {}
     preferred_area = input_fn("Preferred area (leave blank for any): ").strip()
@@ -218,6 +233,7 @@ def get_user_preferences(input_fn: InputFn = input) -> UserPreferences:
 
 
 def run_search_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[GymRecord]:
+    """Run the interactive search workflow."""
     filters = get_search_filters(input_fn)
     matches = search_gyms(gyms, filters)
     sort_key = get_sort_key(input_fn)
@@ -242,6 +258,7 @@ def run_search_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[Gy
 
 
 def run_recommendation_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[tuple[GymRecord, float, str]]:
+    """Run the interactive recommendation workflow."""
     prefs = get_user_preferences(input_fn)
     recommendations = recommend_gyms(gyms, prefs)
     if not recommendations:
@@ -263,6 +280,7 @@ def select_gyms_by_id(
     max_count: int,
     input_fn: InputFn = input,
 ) -> list[GymRecord]:
+    """Prompt for gym IDs and return the matching records."""
     gym_lookup = {gym["gym_id"]: gym for gym in gyms}
     while True:
         raw_value = input_fn(prompt).strip()
@@ -283,6 +301,7 @@ def select_gyms_by_id(
 
 
 def _build_comparison_rows(gyms: list[GymRecord], scores: dict[int, float] | None = None) -> list[list[str]]:
+    """Build comparison table rows for display."""
     fields = [
         ("Gym Name", lambda gym: gym["gym_name"]),
         ("Area", lambda gym: gym["area"]),
@@ -307,6 +326,7 @@ def _build_comparison_rows(gyms: list[GymRecord], scores: dict[int, float] | Non
 
 
 def compare_gyms(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
+    """Compare selected gyms in a table layout."""
     print("\nAvailable gyms:\n")
     display_gyms(gyms)
     selected = select_gyms_by_id(
@@ -334,6 +354,7 @@ def _collect_gym_details(
     input_fn: InputFn = input,
     existing: GymRecord | None = None,
 ) -> GymRecord:
+    """Prompt for gym details and build a record."""
     def current_value(key: str, fallback: str = "") -> str:
         if existing is None:
             return fallback
@@ -446,6 +467,7 @@ def _collect_gym_details(
 
 
 def add_gym(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
+    """Collect and add a new gym record."""
     gym_id = generate_next_gym_id(gyms)
     new_gym = _collect_gym_details(gym_id, input_fn=input_fn)
     gyms.append(new_gym)
@@ -454,6 +476,7 @@ def add_gym(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
 
 
 def update_gym_info(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
+    """Update an existing gym record."""
     print("\nExisting gyms:\n")
     display_gyms(gyms)
     gym_id = prompt_optional_int("Enter the gym ID to update: ", input_fn)
@@ -472,6 +495,7 @@ def update_gym_info(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
 
 
 def manage_database(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
+    """Handle add/update flows for the dataset."""
     print("\nDatabase management:")
     print("1. Add a new gym")
     print("2. Update an existing gym")
@@ -485,6 +509,7 @@ def manage_database(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
 
 
 def main_menu(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
+    """Run the top-level menu loop."""
     while True:
         print("Gym and Fitness Centre Recommendation System")
         print("1. View all gyms")

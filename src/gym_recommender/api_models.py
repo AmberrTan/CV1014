@@ -1,3 +1,5 @@
+"""Pydantic models for API payload validation."""
+
 from __future__ import annotations
 
 from typing import Literal
@@ -19,6 +21,8 @@ def _validate_time_value(value: int | None, field_name: str) -> int | None:
 
 
 class PreferenceCoordinatesMixin(BaseModel):
+    """Shared coordinate validation for search/recommend inputs."""
+
     user_x: int | None = None
     user_y: int | None = None
 
@@ -32,6 +36,8 @@ class PreferenceCoordinatesMixin(BaseModel):
 
 
 class GymPayload(BaseModel):
+    """Request payload for creating/updating a gym."""
+
     gym_name: str
     area: str
     address: str
@@ -67,6 +73,8 @@ class GymPayload(BaseModel):
 
 
 class SearchRequest(PreferenceCoordinatesMixin):
+    """Request payload for search filters."""
+
     area: str | None = None
     max_budget: float | None = None
     min_rating: float | None = None
@@ -91,6 +99,8 @@ class SearchRequest(PreferenceCoordinatesMixin):
 
 
 class RecommendationRequest(PreferenceCoordinatesMixin):
+    """Request payload for recommendations."""
+
     preferred_area: str | None = None
     max_budget: float | None = None
     min_rating: float | None = None
@@ -109,11 +119,15 @@ class RecommendationRequest(PreferenceCoordinatesMixin):
 
 
 class CompareRequest(BaseModel):
+    """Request payload for comparing gyms."""
+
     gym_ids: list[int]
     preferences: RecommendationRequest | None = None
 
 
 class GymResponse(GymPayload):
+    """Response payload returned to the frontend."""
+
     gym_id: int
     display_hours: str
     distance: float | None = None

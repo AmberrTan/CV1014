@@ -1,3 +1,10 @@
+"""Project configuration helpers.
+
+This module provides lightweight helpers for locating the repository root and
+loading environment variables from a `.env` file. The loader is intentionally
+minimal to keep dependencies small and predictable for coursework use.
+"""
+
 from __future__ import annotations
 
 import os
@@ -8,6 +15,14 @@ DEFAULT_ENV_PATH = ROOT_DIR / ".env"
 
 
 def load_dotenv(path: Path = DEFAULT_ENV_PATH) -> None:
+    """Populate os.environ with values from a .env file.
+
+    The parser ignores blank lines, comments, and malformed entries. Existing
+    environment variables are left untouched to allow shell overrides.
+
+    Args:
+        path: Location of the .env file.
+    """
     if not path.exists():
         return
 

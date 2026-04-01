@@ -1,14 +1,20 @@
+"""Typed dictionaries that describe the gym dataset schema."""
+
 from __future__ import annotations
 
 from typing import TypedDict
 
 
 class GoogleMapsLocation(TypedDict, total=False):
+    """Location payload from Google Maps enrichment."""
+
     latitude: float | None
     longitude: float | None
 
 
 class GoogleMapsData(TypedDict, total=False):
+    """Enriched Google Maps metadata for a gym."""
+
     place_id: str | None
     display_name: str | None
     formatted_address: str | None
@@ -27,6 +33,8 @@ class GoogleMapsData(TypedDict, total=False):
 
 
 class OpenStreetMapData(TypedDict, total=False):
+    """Enriched OpenStreetMap metadata for a gym."""
+
     osm_type: str | None
     osm_id: int | None
     place_id: int | None
@@ -48,6 +56,8 @@ class OpenStreetMapData(TypedDict, total=False):
 
 
 class GymRecordBase(TypedDict):
+    """Fields required in the core gym dataset."""
+
     gym_id: int
     gym_name: str
     area: str
@@ -73,11 +83,15 @@ class GymRecordBase(TypedDict):
 
 
 class GymRecord(GymRecordBase, total=False):
+    """Gym record with optional enrichment payloads."""
+
     google_maps: GoogleMapsData
     openstreetmap: OpenStreetMapData
 
 
 class SearchFilters(TypedDict, total=False):
+    """User-provided filters for search and browse flows."""
+
     area: str
     max_budget: float
     min_rating: float
@@ -92,6 +106,8 @@ class SearchFilters(TypedDict, total=False):
 
 
 class UserPreferences(TypedDict, total=False):
+    """User preference payload for recommendations."""
+
     preferred_area: str
     max_budget: float
     min_rating: float
