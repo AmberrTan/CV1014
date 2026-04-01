@@ -462,6 +462,11 @@ npm install
 npm run dev
 ```
 
+Notes:
+- Recommended Node.js version: 22 LTS (or newer). The console app does not require Node.js.
+- If you are on Node 25+, Next.js dev overlay requires a localStorage file. Use:
+  `NODE_OPTIONS="--localstorage-file=/tmp/node-localstorage.json" npm run dev`
+
 ### Run Through The Launcher Script
 
 ```bash
@@ -471,6 +476,12 @@ uv run python scripts/start_app.py install_web
 uv run python scripts/start_app.py web
 uv run python scripts/start_app.py fullstack
 ```
+
+Launcher options:
+- `uv run python scripts/start_app.py web --api-base-url http://127.0.0.1:8000 --port 3000`
+- `uv run python scripts/start_app.py fullstack --host 127.0.0.1 --port 8000 --web-port 3000`
+
+The launcher automatically sets a localStorage file for Node-based dev servers to avoid Next.js overlay errors.
 
 ## Suggested Presentation Demo Flow
 
