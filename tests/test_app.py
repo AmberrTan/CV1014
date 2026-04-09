@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, cast
 
 from gym_recommender.data import generate_next_gym_id, load_database, save_database
-from gym_recommender.recommendation import calculate_match_score, recommend_gyms
 from gym_recommender.search import calculate_distance, search_gyms, sort_gyms
 from gym_recommender.services import compare_gym_records, search_gym_records
 
@@ -84,39 +83,6 @@ class GymSystemTests(unittest.TestCase):
     def test_distance_calculation(self) -> None:
         self.assertAlmostEqual(calculate_distance(0, 0, 3, 4), 5.0)
 
-    def test_recommendation_returns_ranked_results(self) -> None:
-        recommendations = recommend_gyms(
-            self.gyms,
-            {
-                "preferred_area": "Raffles Place",
-                "max_budget": 250.0,
-                "min_rating": 4.0,
-                "preferred_facilities": ["group classes"],
-                "classes_required": True,
-                "user_x": 60,
-                "user_y": 70,
-                "fitness_goal": "general fitness",
-                "skill_level": "beginner",
-            },
-        )
-        self.assertGreaterEqual(len(recommendations), 1)
-        self.assertGreaterEqual(recommendations[0][1], recommendations[-1][1])
-
-    def test_match_score_stays_in_percentage_range(self) -> None:
-        score = calculate_match_score(
-            self.gyms[0],
-            {
-                "max_budget": 120.0,
-                "preferred_facilities": ["cardio", "shower"],
-                "fitness_goal": "general fitness",
-                "skill_level": "beginner",
-                "user_x": 20,
-                "user_y": 20,
-            },
-        )
-        self.assertGreaterEqual(score, 0.0)
-        self.assertLessEqual(score, 100.0)
-
     def test_service_search_returns_serialized_distance(self) -> None:
         results = search_gym_records(
             {
@@ -152,33 +118,6 @@ class GymSystemTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.json()), 1)
-
-    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
-    def test_api_recommend(self) -> None:
-        client = _create_client()
-        response = client.post(
-            "/api/recommend",
-            json={
-                "preferred_area": "Raffles Place",
-                "max_budget": 250.0,
-                "preferred_facilities": ["group classes"],
-                "classes_required": True,
-                "fitness_goal": "general fitness",
-                "skill_level": "beginner",
-                "user_x": 60,
-                "user_y": 70,
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(response.json()), 1)
-
-    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
-    def test_api_recommend_is_removed(self) -> None:
-        client = _create_client()
-        response = client.post("/api/recommend", json={"preferred_area": "Raffles Place"})
-
-        self.assertEqual(response.status_code, 404)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_compare_rejects_duplicate_gym_ids(self) -> None:
@@ -263,13 +202,6 @@ class GymSystemTests(unittest.TestCase):
     def test_api_search_rejects_invalid_open_time(self) -> None:
         client = _create_client()
         response = client.post("/api/search", json={"open_at": 2500})
-
-        self.assertEqual(response.status_code, 422)
-
-    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
-    def test_api_recommend_rejects_invalid_preferred_time(self) -> None:
-        client = _create_client()
-        response = client.post("/api/recommend", json={"preferred_time": 2360})
 
         self.assertEqual(response.status_code, 422)
 

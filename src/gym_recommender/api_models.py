@@ -30,7 +30,7 @@ def _validate_required_time(value: int, field_name: str) -> int:
 
 
 class PreferenceCoordinatesMixin(BaseModel):
-    """Shared coordinate validation for search/recommend inputs."""
+    """Shared coordinate validation for search inputs."""
 
     user_x: int | None = None
     user_y: int | None = None
@@ -93,7 +93,7 @@ class SearchRequest(PreferenceCoordinatesMixin):
     classes_available: bool | None = None
     female_friendly: bool | None = None
     gym_type: str | None = None
-    sort_key: Literal["none", "price", "rating", "distance", "score"] = "none"
+    sort_key: Literal["none", "price", "rating", "distance"] = "none"
 
     @field_validator("open_at")
     @classmethod

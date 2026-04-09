@@ -105,18 +105,17 @@ class SearchFilters(TypedDict, total=False):
     user_y: int
 
 
-class UserPreferences(TypedDict, total=False):
-    """User preference payload for recommendations."""
+class SearchFilters(TypedDict, total=False):
+    """User-provided filters for search and browse flows."""
 
-    preferred_area: str
+    area: str
     max_budget: float
     min_rating: float
-    preferred_facilities: list[str]
-    preferred_time: int
+    required_facilities: list[str]
+    open_at: int
+    is_24_hours: bool
+    classes_available: bool
     female_friendly: bool
-    classes_required: bool
+    gym_type: str
     user_x: int
     user_y: int
-    fitness_goal: str
-    skill_level: str
-    preferred_gym_type: str
