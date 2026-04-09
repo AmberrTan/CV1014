@@ -25,6 +25,7 @@ build/
 # Local tool caches
 .pycache/
 .uv-cache/
+.worktrees/
 
 # Generated data exports
 data/gyms_osm_sg.json
