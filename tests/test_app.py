@@ -174,6 +174,13 @@ class GymSystemTests(unittest.TestCase):
         self.assertGreaterEqual(len(response.json()), 1)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
+    def test_api_recommend_is_removed(self) -> None:
+        client = _create_client()
+        response = client.post("/api/recommend", json={"preferred_area": "Raffles Place"})
+
+        self.assertEqual(response.status_code, 404)
+
+    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_compare_rejects_duplicate_gym_ids(self) -> None:
         client = _create_client()
         response = client.post("/api/compare", json={"gym_ids": [1, 1]})
