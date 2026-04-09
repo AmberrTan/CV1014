@@ -10,7 +10,6 @@ const rows: Array<[string, (gym: Gym) => string]> = [
   ["Classes", (gym) => (gym.classes_available ? "Yes" : "No")],
   ["Female-friendly", (gym) => (gym.female_friendly ? "Yes" : "No")],
   ["Facilities", (gym) => gym.facilities.join(", ")],
-  ["Recommendation Score", (gym) => gym.recommendation_score?.toFixed(2) || "-"],
 ];
 
 export function CompareTable({ gyms }: { gyms: Gym[] }) {

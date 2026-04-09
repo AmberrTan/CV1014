@@ -1,4 +1,4 @@
-import type { Gym, RecommendationPayload, SearchPayload } from "./types";
+import type { Gym, SearchPayload } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
@@ -29,17 +29,10 @@ export function searchGyms(payload: SearchPayload): Promise<Gym[]> {
   });
 }
 
-export function recommendGyms(payload: RecommendationPayload): Promise<Gym[]> {
-  return request<Gym[]>("/api/recommend", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function compareGyms(gymIds: number[], preferences?: RecommendationPayload): Promise<Gym[]> {
+export function compareGyms(gymIds: number[]): Promise<Gym[]> {
   return request<Gym[]>("/api/compare", {
     method: "POST",
-    body: JSON.stringify({ gym_ids: gymIds, preferences }),
+    body: JSON.stringify({ gym_ids: gymIds }),
   });
 }
 
