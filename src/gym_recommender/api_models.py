@@ -106,29 +106,7 @@ class SearchRequest(PreferenceCoordinatesMixin):
             raise ValueError("distance sorting requires user_x and user_y")
         return self
 
-
-class ComparePreferences(PreferenceCoordinatesMixin):
-    """Optional scoring preferences for gym comparisons."""
-
-    preferred_area: str | None = None
-    max_budget: float | None = None
-    min_rating: float | None = None
-    preferred_facilities: list[str] = Field(default_factory=list)
-    preferred_time: int | None = None
-    female_friendly: bool | None = None
-    classes_required: bool | None = None
-    fitness_goal: str | None = None
-    skill_level: str | None = None
-    preferred_gym_type: str | None = None
-
-    @field_validator("preferred_time")
-    @classmethod
-    def validate_preferred_time(cls, value: int | None) -> int | None:
-        return _validate_time_value(value, "preferred_time")
-
-
 class CompareRequest(BaseModel):
     """Request payload for comparing gyms."""
 
     gym_ids: list[int]
-    preferences: ComparePreferences | None = None
