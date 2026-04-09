@@ -64,7 +64,6 @@ def sort_gyms(
     sort_key: str,
     user_x: int | None = None,
     user_y: int | None = None,
-    scored_gyms: dict[int, float] | None = None,
 ) -> list[GymRecord]:
     """Sort gyms by a requested key while preserving deterministic tie breaks."""
     if sort_key == "price":
@@ -78,15 +77,6 @@ def sort_gyms(
             gyms,
             key=lambda gym: calculate_distance(
                 user_x, user_y, gym["x_coordinate"], gym["y_coordinate"]
-            ),
-        )
-    if sort_key == "score" and scored_gyms:
-        return sorted(
-            gyms,
-            key=lambda gym: (
-                -scored_gyms.get(gym["gym_id"], 0.0),
-                -gym["rating"],
-                gym["monthly_price"],
             ),
         )
     return gyms[:]
