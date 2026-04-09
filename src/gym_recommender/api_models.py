@@ -107,8 +107,8 @@ class SearchRequest(PreferenceCoordinatesMixin):
         return self
 
 
-class RecommendationRequest(PreferenceCoordinatesMixin):
-    """Request payload for recommendations."""
+class ComparePreferences(PreferenceCoordinatesMixin):
+    """Optional scoring preferences for gym comparisons."""
 
     preferred_area: str | None = None
     max_budget: float | None = None
@@ -131,14 +131,4 @@ class CompareRequest(BaseModel):
     """Request payload for comparing gyms."""
 
     gym_ids: list[int]
-    preferences: RecommendationRequest | None = None
-
-
-class GymResponse(GymPayload):
-    """Response payload returned to the frontend."""
-
-    gym_id: int
-    display_hours: str
-    distance: float | None = None
-    recommendation_score: float | None = None
-    recommendation_reason: str | None = None
+    preferences: ComparePreferences | None = None
