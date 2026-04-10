@@ -36,15 +36,6 @@
           <mxGeometry x="60" y="290" width="110" height="80" as="geometry"/>
         </mxCell>
 
-        <mxCell id="frontend_group" value="Frontend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#93c5fd;strokeWidth=1.5;fontSize=17;fontStyle=1;align=left;spacingLeft=16;verticalAlign=top;fontColor=#1d4ed8;" vertex="1" parent="1">
-          <mxGeometry x="200" y="150" width="230" height="360" as="geometry"/>
-        </mxCell>
-        <mxCell id="webui" value="Next.js Web UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#60a5fa;strokeWidth=1.5;fontSize=18;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
-          <mxGeometry x="235" y="285" width="160" height="90" as="geometry"/>
-        </mxCell>
-        <mxCell id="webui_note" value="Presentation UI" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=13;fontColor=#4b5563;" vertex="1" parent="1">
-          <mxGeometry x="245" y="380" width="140" height="20" as="geometry"/>
-        </mxCell>
         <mxCell id="console" value="Console App" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#93c5fd;strokeWidth=1.5;fontSize=16;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
           <mxGeometry x="250" y="430" width="130" height="64" as="geometry"/>
         </mxCell>
@@ -95,9 +86,6 @@
         <mxCell id="legend_title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#374151;" vertex="1" parent="1">
           <mxGeometry x="60" y="760" width="70" height="20" as="geometry"/>
         </mxCell>
-        <mxCell id="legend_blue" value="Frontend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#60a5fa;strokeWidth=1;fontSize=12;fontColor=#1f2937;" vertex="1" parent="1">
-          <mxGeometry x="130" y="754" width="90" height="28" as="geometry"/>
-        </mxCell>
         <mxCell id="legend_purple" value="Backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#a78bfa;strokeWidth=1;fontSize=12;fontColor=#1f2937;" vertex="1" parent="1">
           <mxGeometry x="230" y="754" width="90" height="28" as="geometry"/>
         </mxCell>
@@ -108,12 +96,6 @@
           <mxGeometry x="430" y="754" width="100" height="28" as="geometry"/>
         </mxCell>
 
-        <mxCell id="a1" value="HTTP Request" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6b7280;fontSize=12;fontColor=#374151;" edge="1" parent="1" source="users" target="webui">
-          <mxGeometry relative="1" as="geometry"/>
-        </mxCell>
-        <mxCell id="a2" value="API Call" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6b7280;fontSize=12;fontColor=#374151;" edge="1" parent="1" source="webui" target="backend">
-          <mxGeometry relative="1" as="geometry"/>
-        </mxCell>
         <mxCell id="a3" value="Search Query" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6b7280;fontSize=12;fontColor=#374151;" edge="1" parent="1" source="backend" target="search">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
