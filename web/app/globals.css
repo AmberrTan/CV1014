@@ -269,9 +269,14 @@ p {
   align-items: baseline;
 }
 
+.toolbar--baseline .button--small {
+  align-self: end;
+}
+
 .button--small {
   padding: 8px 18px;
   font-size: 0.9rem;
+  line-height: 1.2;
 }
 
 .field {
