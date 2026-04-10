@@ -7,7 +7,6 @@ from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import (
-    Button,
     Checkbox,
     DataTable,
     Footer,
@@ -191,10 +190,6 @@ class SearchScreen(Screen):
             message = f"{area_message} {message}"
         status.update(message)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "search-submit":
-            self._run_search()
-
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id and event.input.id.startswith("search-"):
             self._run_search()
@@ -208,7 +203,6 @@ class CompareScreen(Screen):
             yield Label("Compare gyms", id="compare-title")
             with Horizontal():
                 yield Input(placeholder="Gym IDs (e.g. 1,2)", id="compare-ids")
-                yield Button("Compare", id="compare-submit", variant="primary")
             yield Static("Enter 2 or 3 IDs to compare.", id="compare-status")
             yield DataTable(id="compare-table")
 
@@ -257,10 +251,6 @@ class CompareScreen(Screen):
             return
         self._build_table(gyms)
         status.update("Comparison ready.")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "compare-submit":
-            self._run_compare()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id == "compare-ids":
