@@ -206,13 +206,6 @@ class GymSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
     @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
-    def test_api_recommend_rejects_invalid_preferred_time(self) -> None:
-        client = _create_client()
-        response = client.post("/api/recommend", json={"preferred_time": 2360})
-
-        self.assertEqual(response.status_code, 422)
-
-    @unittest.skipIf(TestClient is None, "fastapi not installed in this environment")
     def test_api_create_gym_rejects_invalid_non_24_hour_schedule(self) -> None:
         client = _create_client()
         response = client.post(

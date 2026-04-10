@@ -30,7 +30,7 @@ def _validate_required_time(value: int, field_name: str) -> int:
 
 
 class PreferenceCoordinatesMixin(BaseModel):
-    """Shared coordinate validation for search/recommend inputs."""
+    """Shared coordinate validation for search inputs."""
 
     user_x: int | None = None
     user_y: int | None = None
@@ -105,7 +105,6 @@ class SearchRequest(PreferenceCoordinatesMixin):
         if self.sort_key == "distance" and self.user_x is None:
             raise ValueError("distance sorting requires user_x and user_y")
         return self
-
 
 class CompareRequest(BaseModel):
     """Request payload for comparing gyms."""

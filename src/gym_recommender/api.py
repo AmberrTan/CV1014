@@ -76,12 +76,9 @@ def search_endpoint(request: SearchRequest) -> list[dict[str, object]]:
 
 @app.post("/api/compare")
 def compare_endpoint(request: CompareRequest) -> list[dict[str, object]]:
-    """Compare 2-3 gyms with optional scoring."""
-    preferences = None
-    if request.preferences is not None:
-        preferences = request.preferences.model_dump(exclude_none=True)
+    """Compare 2-3 gyms."""
     try:
-        return compare_gym_records(request.gym_ids, preferences)
+        return compare_gym_records(request.gym_ids)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
 

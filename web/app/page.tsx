@@ -30,9 +30,6 @@ export default async function HomePage() {
             <Link className="button" href="/browse">
               Explore the database
             </Link>
-            <Link className="button-secondary" href="/recommend">
-              Get personalized matches
-            </Link>
           </div>
         </div>
         <div className="hero-grid">
@@ -44,7 +41,7 @@ export default async function HomePage() {
           <div className="stat">
             <span style={{ fontSize: "0.9rem", color: "var(--muted)", textTransform: "uppercase" }}>Scoring</span>
             <strong style={{ fontSize: "2.5rem", marginTop: 4 }}>20+</strong>
-            <p style={{ margin: 0 }}>Data points used per recommendation</p>
+            <p style={{ margin: 0 }}>Data points used per gym match</p>
           </div>
           <div className="stat">
             <span style={{ fontSize: "0.9rem", color: "var(--muted)", textTransform: "uppercase" }}>Technology</span>

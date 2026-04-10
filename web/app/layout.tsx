@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Gym Recommendation System",
-  description: "Browse, compare, and recommend gyms with a Python-powered backend.",
+  description: "Browse and compare gyms with a Python-powered backend.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -21,9 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <nav className="site-nav" aria-label="Main Navigation">
               <Link href="/">Home</Link>
               <Link href="/browse">Browse</Link>
-              <Link href="/recommend">Recommend</Link>
               <Link href="/compare">Compare</Link>
-              <Link href="/admin">Admin</Link>
             </nav>
           </div>
         </header>

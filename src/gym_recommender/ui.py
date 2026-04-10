@@ -237,9 +237,7 @@ def select_gyms_by_id(
         return [gym_lookup[gym_id] for gym_id in unique_ids]
 
 
-def _build_comparison_rows(
-    gyms: list[GymRecord],
-) -> list[list[str]]:
+def _build_comparison_rows(gyms: list[GymRecord]) -> list[list[str]]:
     """Build comparison table rows for display."""
     fields = [
         ("Gym Name", lambda gym: gym["gym_name"]),

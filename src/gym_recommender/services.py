@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 from gym_recommender.data import generate_next_gym_id, load_database, save_database
-from gym_recommender.models import GymRecord, SearchFilters, UserPreferences
+from gym_recommender.models import GymRecord, SearchFilters
 from gym_recommender.search import calculate_distance, search_gyms, sort_gyms
 
 
@@ -58,28 +58,14 @@ def search_gym_records(filters: SearchFilters, sort_key: str = "none") -> list[d
 
     if sort_key == "distance":
         user_x, user_y = _require_distance_coordinates(user_x, user_y)
-        matches = sort_gyms(
-            matches,
-            "distance",
-            user_x=user_x,
-            user_y=user_y,
-        )
+        matches = sort_gyms(matches, "distance", user_x=user_x, user_y=user_y)
     elif sort_key in {"price", "rating"}:
         matches = sort_gyms(matches, sort_key)
 
-    return [
-        serialize_gym(
-            gym,
-            user_x=user_x,
-            user_y=user_y,
-        )
-        for gym in matches
-    ]
+    return [serialize_gym(gym, user_x=user_x, user_y=user_y) for gym in matches]
 
 
-def compare_gym_records(
-    gym_ids: list[int], prefs: UserPreferences | None = None
-) -> list[dict[str, Any]]:
+def compare_gym_records(gym_ids: list[int]) -> list[dict[str, Any]]:
     """Compare 2-3 gyms and return serialized records."""
     gyms = load_database()
     if len(gym_ids) < 2 or len(gym_ids) > 3:
