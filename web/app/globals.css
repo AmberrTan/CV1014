@@ -273,6 +273,20 @@ p {
   align-self: end;
 }
 
+.toolbar--compare {
+  --compare-field-height: 48px;
+}
+
+.toolbar--compare .field input {
+  box-sizing: border-box;
+  height: var(--compare-field-height);
+}
+
+.toolbar--compare .button {
+  box-sizing: border-box;
+  height: var(--compare-field-height);
+}
+
 .button--small {
   padding: 8px 18px;
   font-size: 0.9rem;
