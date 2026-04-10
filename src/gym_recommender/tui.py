@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import (
     Checkbox,
@@ -110,21 +110,21 @@ class SearchScreen(Screen):
         yield Footer()
         with Vertical():
             yield Label("Search gyms", id="search-title")
-            with Container(classes="search-form"):
-                yield Input(placeholder="Area", id="search-area")
-                yield Input(placeholder="Max budget", id="search-max-budget")
-                yield Input(placeholder="Min rating", id="search-min-rating")
-                yield Input(placeholder="Facilities (comma separated)", id="search-facilities")
-                yield Input(placeholder="Open at (HHMM)", id="search-open-at")
-                yield Input(placeholder="Gym type", id="search-gym-type")
-                yield Input(placeholder="User X coordinate", id="search-user-x")
-                yield Input(placeholder="User Y coordinate", id="search-user-y")
-                yield Checkbox("24-hour only", id="search-24-hours")
-                yield Checkbox("Classes available", id="search-classes")
-                yield Checkbox("Female-friendly", id="search-female")
-                yield Button("Search", id="search-submit", variant="primary")
-                yield Static("Enter filters and press Search.", id="search-status")
-            yield ListView(id="search-results")
+            with Horizontal(classes="search-layout"):
+                with VerticalScroll(classes="search-form"):
+                    yield Input(placeholder="Area", id="search-area")
+                    yield Input(placeholder="Max budget", id="search-max-budget")
+                    yield Input(placeholder="Min rating", id="search-min-rating")
+                    yield Input(placeholder="Facilities (comma separated)", id="search-facilities")
+                    yield Input(placeholder="Open at (HHMM)", id="search-open-at")
+                    yield Input(placeholder="Gym type", id="search-gym-type")
+                    yield Input(placeholder="User X coordinate", id="search-user-x")
+                    yield Input(placeholder="User Y coordinate", id="search-user-y")
+                    yield Checkbox("24-hour only", id="search-24-hours")
+                    yield Checkbox("Classes available", id="search-classes")
+                    yield Checkbox("Female-friendly", id="search-female")
+                    yield Static("Enter filters and press Enter.", id="search-status")
+                yield ListView(id="search-results")
 
     def _collect_filters(self) -> SearchFilters:
         filters: SearchFilters = {}
@@ -237,6 +237,10 @@ class CompareScreen(Screen):
     def _run_compare(self) -> None:
         status = self.query_one("#compare-status", Static)
         ids_raw = self.query_one("#compare-ids", Input).value
+        if not ids_raw.strip():
+            status.update("Enter 2 or 3 gym IDs to compare.")
+            self.query_one("#compare-table", DataTable).clear(columns=True)
+            return
         parsed = [int(item) for item in ids_raw.split(",") if item.strip().isdigit()]
         unique_ids = list(dict.fromkeys(parsed))
         if len(unique_ids) < 2 or len(unique_ids) > 3:
@@ -281,8 +285,15 @@ class GymTuiApp(App):
     }
 
     .search-form {
-      padding: 1 0;
-      border-bottom: solid $panel;
+      width: 40;
+      height: 1fr;
+      padding: 1;
+      border-right: solid $panel;
+      scrollbar-gutter: stable;
+    }
+
+    .search-layout {
+      height: 1fr;
     }
 
     #compare-table {
@@ -300,9 +311,13 @@ class GymTuiApp(App):
     def __init__(self) -> None:
         super().__init__()
         self._gyms = load_database()
+        self._areas = sorted({gym["area"] for gym in self._gyms})
 
     def get_gyms(self) -> list[GymRecord]:
         return list(self._gyms)
+
+    def get_areas(self) -> list[str]:
+        return list(self._areas)
 
     def on_mount(self) -> None:
         self.install_screen(BrowseScreen(), name="browse")
