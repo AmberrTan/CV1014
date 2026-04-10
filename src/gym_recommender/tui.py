@@ -146,9 +146,7 @@ class SearchScreen(Screen):
             filters["female_friendly"] = True
         return filters
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id != "search-submit":
-            return
+    def _run_search(self) -> None:
         status = self.query_one("#search-status", Static)
         results_view = self.query_one("#search-results", ListView)
         filters = self._collect_filters()
@@ -160,6 +158,14 @@ class SearchScreen(Screen):
             list_item.data = item
             results_view.append(list_item)
         status.update(f"Found {len(gyms)} gyms.")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "search-submit":
+            self._run_search()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id and event.input.id.startswith("search-"):
+            self._run_search()
 
 
 class CompareScreen(Screen):
@@ -202,9 +208,7 @@ class CompareScreen(Screen):
                 row.append(str(value))
             table.add_row(*row)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id != "compare-submit":
-            return
+    def _run_compare(self) -> None:
         status = self.query_one("#compare-status", Static)
         ids_raw = self.query_one("#compare-ids", Input).value
         parsed = [int(item) for item in ids_raw.split(",") if item.strip().isdigit()]
@@ -221,6 +225,14 @@ class CompareScreen(Screen):
             return
         self._build_table(gyms)
         status.update("Comparison ready.")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "compare-submit":
+            self._run_compare()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "compare-ids":
+            self._run_compare()
 
 
 class GymTuiApp(App):
