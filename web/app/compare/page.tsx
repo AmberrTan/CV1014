@@ -57,7 +57,7 @@ export default function ComparePage() {
         <div className="eyebrow">Compare</div>
         <h1 style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}>Shortlist gyms side by side</h1>
         <p>Enter 2 or 3 gym IDs from the database and view the key details in one table.</p>
-        <form className="toolbar toolbar--baseline" onSubmit={onSubmit} style={{ marginTop: 18 }}>
+        <form className="toolbar toolbar--baseline toolbar--compare" onSubmit={onSubmit} style={{ marginTop: 18 }}>
           <div className="field">
             <label htmlFor="compare-gym-ids">Gym IDs</label>
             <input
