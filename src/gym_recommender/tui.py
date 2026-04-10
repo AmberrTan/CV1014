@@ -64,6 +64,22 @@ def _parse_optional_float(value: str) -> float | None:
         return None
 
 
+def resolve_area_match(raw_area: str, areas: list[str]) -> tuple[str | None, str | None]:
+    cleaned = raw_area.strip()
+    if not cleaned:
+        return None, None
+    lowered = cleaned.casefold()
+    for area in areas:
+        if area.casefold() == lowered:
+            return area, None
+    partial_matches = [area for area in areas if lowered in area.casefold()]
+    if len(partial_matches) == 1:
+        return partial_matches[0], f"Using area '{partial_matches[0]}' for '{cleaned}'."
+    if not partial_matches:
+        return None, f"Area '{cleaned}' not found. Try: {', '.join(areas)}."
+    return None, f"Area '{cleaned}' matches multiple areas: {', '.join(partial_matches)}."
+
+
 class BrowseScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -113,9 +129,6 @@ class SearchScreen(Screen):
 
     def _collect_filters(self) -> SearchFilters:
         filters: SearchFilters = {}
-        area = self.query_one("#search-area", Input).value.strip()
-        if area:
-            filters["area"] = area
         max_budget = _parse_optional_float(self.query_one("#search-max-budget", Input).value)
         if max_budget is not None:
             filters["max_budget"] = max_budget
@@ -150,6 +163,22 @@ class SearchScreen(Screen):
         status = self.query_one("#search-status", Static)
         results_view = self.query_one("#search-results", ListView)
         filters = self._collect_filters()
+        raw_area = self.query_one("#search-area", Input).value
+        resolved_area, area_message = resolve_area_match(raw_area, self.app.get_areas())
+        if raw_area.strip() and not resolved_area:
+            status.update(area_message or "Please enter a valid area.")
+            results_view.clear()
+            return
+        if resolved_area:
+            filters["area"] = resolved_area
+        if not filters:
+            status.update("Add at least one filter before searching.")
+            results_view.clear()
+            return
+        if ("user_x" in filters) ^ ("user_y" in filters):
+            status.update("Enter both user coordinates to filter by distance.")
+            results_view.clear()
+            return
         gyms = search_gyms(self.app.get_gyms(), filters)
         results_view.clear()
         for gym in gyms:
@@ -157,7 +186,10 @@ class SearchScreen(Screen):
             list_item = ListItem(Label(item.render_label()))
             list_item.data = item
             results_view.append(list_item)
-        status.update(f"Found {len(gyms)} gyms.")
+        message = f"Found {len(gyms)} gyms."
+        if area_message:
+            message = f"{area_message} {message}"
+        status.update(message)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "search-submit":
