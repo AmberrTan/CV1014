@@ -3,14 +3,32 @@ from __future__ import annotations
 import os
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 import typer
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+
+
+def _ensure_src_on_path() -> None:
+    src_path = str(SRC_DIR)
+    if src_path not in sys.path:
+        sys.path.insert(0, src_path)
+    existing = os.environ.get("PYTHONPATH", "")
+    existing_parts = [part for part in existing.split(os.pathsep) if part]
+    if src_path not in existing_parts:
+        os.environ["PYTHONPATH"] = (
+            src_path if not existing_parts else os.pathsep.join([src_path, *existing_parts])
+        )
+
+
+_ensure_src_on_path()
+
 from gym_recommender.config import load_dotenv
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
 WEB_DIR = ROOT_DIR / "web"
 WEB_NODE_MODULES = WEB_DIR / "node_modules"
 WEB_NEXT_BIN = WEB_NODE_MODULES / ".bin" / "next"

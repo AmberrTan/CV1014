@@ -37,19 +37,6 @@ export function GymCard({ gym }: { gym: Gym }) {
         </div>
       )}
 
-      {gym.recommendation_score !== undefined && (
-        <div style={{ marginBottom: 16, padding: "12px", borderRadius: 16, background: "rgba(59, 122, 87, 0.08)", border: "1px solid rgba(59, 122, 87, 0.15)" }}>
-          <div className="score" style={{ fontSize: "1.1rem", marginBottom: 4 }}>
-            Match Score: {gym.recommendation_score.toFixed(0)}%
-          </div>
-          {gym.recommendation_reason && (
-            <p style={{ margin: 0, fontSize: "0.85rem", fontStyle: "italic", color: "var(--ink)" }}>
-              "{gym.recommendation_reason}"
-            </p>
-          )}
-        </div>
-      )}
-
       <div className="pill-row" style={{ marginTop: "auto" }}>
         {gym.facilities.slice(0, 4).map((facility) => (
           <span key={facility} className="pill" style={{ fontSize: "0.75rem", padding: "4px 10px" }}>

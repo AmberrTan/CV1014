@@ -6,8 +6,7 @@ from collections.abc import Callable
 from typing import Any, cast
 
 from gym_recommender.data import generate_next_gym_id, save_database
-from gym_recommender.models import GymRecord, SearchFilters, UserPreferences
-from gym_recommender.recommendation import calculate_match_score, recommend_gyms
+from gym_recommender.models import GymRecord, SearchFilters
 from gym_recommender.search import calculate_distance, search_gyms, sort_gyms
 
 InputFn = Callable[[str], str]
@@ -113,9 +112,8 @@ def display_gyms(
     gyms: list[GymRecord],
     user_x: int | None = None,
     user_y: int | None = None,
-    scores: dict[int, float] | None = None,
 ) -> None:
-    """Pretty-print a list of gyms with optional distance/score info."""
+    """Pretty-print a list of gyms with optional distance info."""
     if not gyms:
         print("No gyms found.")
         return
@@ -124,8 +122,6 @@ def display_gyms(
         if user_x is not None and user_y is not None:
             distance = calculate_distance(user_x, user_y, gym["x_coordinate"], gym["y_coordinate"])
             print(f"  Distance score input: {distance:.2f} units away")
-        if scores and gym["gym_id"] in scores:
-            print(f"  Recommendation score: {scores[gym['gym_id']]:.2f}")
         print(f"  Address: {gym['address']}")
         print(f"  Facilities: {', '.join(gym['facilities'])}")
         print()
@@ -181,62 +177,17 @@ def get_search_filters(input_fn: InputFn = input) -> SearchFilters:
 
 def get_sort_key(input_fn: InputFn = input) -> str:
     """Prompt for a sorting choice."""
-    options = {"1": "price", "2": "rating", "3": "distance", "4": "score", "5": "none"}
+    options = {"1": "price", "2": "rating", "3": "distance", "4": "none"}
     print("\nSort results by:")
     print("1. Lowest price")
     print("2. Highest rating")
     print("3. Nearest distance")
-    print("4. Best recommendation score")
-    print("5. No sorting")
+    print("4. No sorting")
     while True:
         choice = input_fn("Choose an option: ").strip()
         if choice in options:
             return options[choice]
-        print("Please enter 1-5.")
-
-
-def get_user_preferences(input_fn: InputFn = input) -> UserPreferences:
-    """Prompt for recommendation preferences."""
-    print("\nEnter your preferences for personalized recommendations.")
-    prefs: UserPreferences = {}
-    preferred_area = input_fn("Preferred area (leave blank for any): ").strip()
-    if preferred_area:
-        prefs["preferred_area"] = preferred_area
-    max_budget = prompt_optional_float("Maximum monthly budget: ", input_fn)
-    if max_budget is not None:
-        prefs["max_budget"] = max_budget
-    min_rating = prompt_optional_float("Minimum rating: ", input_fn)
-    if min_rating is not None:
-        prefs["min_rating"] = min_rating
-    preferred_facilities = prompt_list("Preferred facilities (comma separated): ", input_fn)
-    if preferred_facilities:
-        prefs["preferred_facilities"] = preferred_facilities
-    preferred_time = prompt_optional_int("Preferred workout time as HHMM: ", input_fn)
-    if preferred_time is not None:
-        prefs["preferred_time"] = preferred_time
-    female_friendly = prompt_yes_no(
-        "Need female-friendly environment? (Y/N, blank to skip): ", input_fn
-    )
-    if female_friendly is not None:
-        prefs["female_friendly"] = female_friendly
-    classes_required = prompt_yes_no("Need classes? (Y/N, blank to skip): ", input_fn)
-    if classes_required is not None:
-        prefs["classes_required"] = classes_required
-    fitness_goal = input_fn("Fitness goal (e.g. general fitness, bodybuilding, classes): ").strip()
-    if fitness_goal:
-        prefs["fitness_goal"] = fitness_goal
-    skill_level = input_fn("Skill level (beginner/intermediate/advanced): ").strip()
-    if skill_level:
-        prefs["skill_level"] = skill_level
-    preferred_gym_type = input_fn("Preferred gym type (leave blank for any): ").strip()
-    if preferred_gym_type:
-        prefs["preferred_gym_type"] = preferred_gym_type
-    user_x = prompt_optional_int("Your X coordinate (blank to skip): ", input_fn)
-    user_y = prompt_optional_int("Your Y coordinate (blank to skip): ", input_fn)
-    if user_x is not None and user_y is not None:
-        prefs["user_x"] = user_x
-        prefs["user_y"] = user_y
-    return prefs
+        print("Please enter 1-4.")
 
 
 def run_search_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[GymRecord]:
@@ -244,12 +195,7 @@ def run_search_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[Gy
     filters = get_search_filters(input_fn)
     matches = search_gyms(gyms, filters)
     sort_key = get_sort_key(input_fn)
-    scores: dict[int, float] | None = None
-
-    if sort_key == "score":
-        scores = {gym["gym_id"]: calculate_match_score(gym, {}) for gym in matches}
-        matches = sort_gyms(matches, "score", scored_gyms=scores)
-    elif sort_key == "distance":
+    if sort_key == "distance":
         user_x = filters.get("user_x")
         user_y = filters.get("user_y")
         if user_x is None or user_y is None:
@@ -260,26 +206,8 @@ def run_search_flow(gyms: list[GymRecord], input_fn: InputFn = input) -> list[Gy
         matches = sort_gyms(matches, sort_key)
 
     print("\nSearch results:\n")
-    display_gyms(matches, filters.get("user_x"), filters.get("user_y"), scores)
+    display_gyms(matches, filters.get("user_x"), filters.get("user_y"))
     return matches
-
-
-def run_recommendation_flow(
-    gyms: list[GymRecord], input_fn: InputFn = input
-) -> list[tuple[GymRecord, float, str]]:
-    """Run the interactive recommendation workflow."""
-    prefs = get_user_preferences(input_fn)
-    recommendations = recommend_gyms(gyms, prefs)
-    if not recommendations:
-        print("\nNo recommendation candidates matched your requirements.\n")
-        return []
-
-    print("\nTop recommendations:\n")
-    for index, (gym, _score, reason) in enumerate(recommendations, start=1):
-        print(f"{index}. {gym_summary_line(gym)}")
-        print(f"   Reason: {reason}")
-        print()
-    return recommendations
 
 
 def select_gyms_by_id(
@@ -310,7 +238,7 @@ def select_gyms_by_id(
 
 
 def _build_comparison_rows(
-    gyms: list[GymRecord], scores: dict[int, float] | None = None
+    gyms: list[GymRecord],
 ) -> list[list[str]]:
     """Build comparison table rows for display."""
     fields = [
@@ -333,10 +261,6 @@ def _build_comparison_rows(
         ("Gym Type", lambda gym: gym["gym_type"]),
         ("Facilities", lambda gym: ", ".join(gym["facilities"])),
         ("Classes", lambda gym: "Yes" if gym["classes_available"] else "No"),
-        (
-            "Recommendation Score",
-            lambda gym: f"{scores.get(gym['gym_id'], 0.0):.2f}" if scores else "-",
-        ),
     ]
     rows: list[list[str]] = []
     for label, formatter in fields:
@@ -355,8 +279,7 @@ def compare_gyms(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
         max_count=3,
         input_fn=input_fn,
     )
-    scores = {gym["gym_id"]: calculate_match_score(gym, {}) for gym in selected}
-    rows = _build_comparison_rows(selected, scores)
+    rows = _build_comparison_rows(selected)
     headers = ["Field", *[gym["gym_name"] for gym in selected]]
     widths = [max(len(row[index]) for row in [headers, *rows]) for index in range(len(headers))]
 
@@ -565,10 +488,9 @@ def main_menu(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
         print("Gym and Fitness Centre Recommendation System")
         print("1. View all gyms")
         print("2. Search gyms by criteria")
-        print("3. Get personalized recommendation")
-        print("4. Compare shortlisted gyms")
-        print("5. Add / update gym information")
-        print("6. Exit")
+        print("3. Compare shortlisted gyms")
+        print("4. Add / update gym information")
+        print("5. Exit")
         choice = input_fn("Select an option: ").strip()
         print()
 
@@ -577,13 +499,11 @@ def main_menu(gyms: list[GymRecord], input_fn: InputFn = input) -> None:
         elif choice == "2":
             run_search_flow(gyms, input_fn)
         elif choice == "3":
-            run_recommendation_flow(gyms, input_fn)
-        elif choice == "4":
             compare_gyms(gyms, input_fn)
-        elif choice == "5":
+        elif choice == "4":
             manage_database(gyms, input_fn)
-        elif choice == "6":
+        elif choice == "5":
             print("Thank you for using the system.")
             return
         else:
-            print("Invalid choice. Please enter 1-6.\n")
+            print("Invalid choice. Please enter 1-5.\n")

@@ -23,8 +23,6 @@ export type Gym = {
   classes_available: boolean;
   display_hours: string;
   distance?: number;
-  recommendation_score?: number;
-  recommendation_reason?: string;
 };
 
 export type SearchPayload = {
@@ -40,19 +38,4 @@ export type SearchPayload = {
   user_x?: number;
   user_y?: number;
   sort_key?: string;
-};
-
-export type RecommendationPayload = {
-  preferred_area?: string;
-  max_budget?: number;
-  min_rating?: number;
-  preferred_facilities?: string[];
-  preferred_time?: number;
-  female_friendly?: boolean;
-  classes_required?: boolean;
-  user_x?: number;
-  user_y?: number;
-  fitness_goal?: string;
-  skill_level?: string;
-  preferred_gym_type?: string;
 };

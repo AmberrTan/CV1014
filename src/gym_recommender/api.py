@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from gym_recommender.api_models import (
     CompareRequest,
     GymPayload,
-    RecommendationRequest,
     SearchRequest,
 )
 from gym_recommender.models import GymRecord
@@ -20,7 +19,6 @@ from gym_recommender.services import (
     create_gym_record,
     get_gym_by_id,
     list_gyms,
-    recommend_gym_records,
     search_gym_records,
     serialize_gym,
     update_gym_record,
@@ -74,12 +72,6 @@ def search_endpoint(request: SearchRequest) -> list[dict[str, object]]:
         return search_gym_records(filters, sort_key=request.sort_key)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@app.post("/api/recommend")
-def recommend_endpoint(request: RecommendationRequest) -> list[dict[str, object]]:
-    """Return top recommendation matches."""
-    return recommend_gym_records(request.model_dump(exclude_none=True))
 
 
 @app.post("/api/compare")

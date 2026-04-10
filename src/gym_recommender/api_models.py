@@ -93,7 +93,7 @@ class SearchRequest(PreferenceCoordinatesMixin):
     classes_available: bool | None = None
     female_friendly: bool | None = None
     gym_type: str | None = None
-    sort_key: Literal["none", "price", "rating", "distance", "score"] = "none"
+    sort_key: Literal["none", "price", "rating", "distance"] = "none"
 
     @field_validator("open_at")
     @classmethod
@@ -107,38 +107,7 @@ class SearchRequest(PreferenceCoordinatesMixin):
         return self
 
 
-class RecommendationRequest(PreferenceCoordinatesMixin):
-    """Request payload for recommendations."""
-
-    preferred_area: str | None = None
-    max_budget: float | None = None
-    min_rating: float | None = None
-    preferred_facilities: list[str] = Field(default_factory=list)
-    preferred_time: int | None = None
-    female_friendly: bool | None = None
-    classes_required: bool | None = None
-    fitness_goal: str | None = None
-    skill_level: str | None = None
-    preferred_gym_type: str | None = None
-
-    @field_validator("preferred_time")
-    @classmethod
-    def validate_preferred_time(cls, value: int | None) -> int | None:
-        return _validate_time_value(value, "preferred_time")
-
-
 class CompareRequest(BaseModel):
     """Request payload for comparing gyms."""
 
     gym_ids: list[int]
-    preferences: RecommendationRequest | None = None
-
-
-class GymResponse(GymPayload):
-    """Response payload returned to the frontend."""
-
-    gym_id: int
-    display_hours: str
-    distance: float | None = None
-    recommendation_score: float | None = None
-    recommendation_reason: str | None = None
