@@ -265,6 +265,15 @@ p {
   gap: 20px;
 }
 
+.toolbar--baseline {
+  align-items: baseline;
+}
+
+.button--small {
+  padding: 8px 18px;
+  font-size: 0.9rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;
