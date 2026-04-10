@@ -59,7 +59,7 @@ def build_osm_search_queries(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY
 
 
 def _read_json(url: str, *, user_agent: str) -> list[dict[str, Any]]:
-    """Fetch a JSON payload from Nominatim."""
+    """Fetch a JSON payload from Nominatim with retries."""
     http_request = request.Request(
         url,
         headers={
@@ -68,14 +68,32 @@ def _read_json(url: str, *, user_agent: str) -> list[dict[str, Any]]:
         },
         method="GET",
     )
-    try:
-        with request.urlopen(http_request, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except error.HTTPError as exc:  # pragma: no cover - depends on live API responses
-        details = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Nominatim request failed with {exc.code}: {details}") from exc
-    except error.URLError as exc:  # pragma: no cover - depends on network availability
-        raise RuntimeError(f"Nominatim request failed: {exc.reason}") from exc
+    last_exc: Exception | None = None
+    for attempt in range(3):  # Retry up to 3 times
+        try:
+            with request.urlopen(http_request, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except error.HTTPError as exc:
+            last_exc = exc
+            # Retry on 429 (Too Many Requests) or 5xx (Server Errors)
+            if attempt < 2 and (exc.code == 429 or 500 <= exc.code <= 599):
+                time.sleep(2**attempt + 1)  # Extra second for Nominatim
+                continue
+            details = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Nominatim request failed with {exc.code}: {details}") from exc
+        except (error.URLError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt < 2:
+                time.sleep(2**attempt + 1)
+                continue
+            raise RuntimeError(f"Nominatim request failed: {exc}") from exc
+
+    if isinstance(last_exc, error.HTTPError):
+        details = last_exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"Nominatim request failed after retries with {last_exc.code}: {details}"
+        ) from last_exc
+    raise RuntimeError(f"Nominatim request failed after retries: {last_exc}") from last_exc
 
 
 def search_place(

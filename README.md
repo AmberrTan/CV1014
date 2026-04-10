@@ -11,22 +11,11 @@ uv run gym-recommender-tui
 
 ## Data Import (OpenStreetMap)
 
-```bash
-uv run python scripts/import_osm_gyms.py --limit 100 --output data/gyms_osm_sg.json
-```
+    uv run python scripts/import_osm_gyms.py --limit 100
 
-To overwrite the default dataset used by the TUI:
+Use `--output` to write elsewhere:
 
-```bash
-uv run python scripts/import_osm_gyms.py --limit 100 --output data/gyms.json
-```
-
-### Optional Environment Variables
-
-- `OVERPASS_API_URL`: Override the Overpass API endpoint.
-- `NOMINATIM_USER_AGENT`: User-Agent required by Nominatim.
-- `NOMINATIM_EMAIL`: Optional contact email for Nominatim requests.
-- `OSM_THROTTLE_SECONDS`: Delay between reverse geocoding requests.
+    uv run python scripts/import_osm_gyms.py --limit 100 --output data/gyms_osm_sg.json
 
 ## Tests
 

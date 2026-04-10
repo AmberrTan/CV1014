@@ -11,7 +11,13 @@ from urllib import error, parse, request
 from gym_recommender.models import GymRecord
 from gym_recommender.openstreetmap_enrichment import DEFAULT_USER_AGENT, build_openstreetmap_payload
 
-OVERPASS_API_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_API_URLS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
+    "https://z.overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+]
+OVERPASS_API_URL = OVERPASS_API_URLS[0]
 NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
 SINGAPORE_BOUNDS = {
     "min_lat": 1.20,
@@ -35,26 +41,51 @@ out center tags;
 
 
 def fetch_overpass_elements(
-    *, country_code: str = "SG", api_url: str = OVERPASS_API_URL
+    *, country_code: str = "SG", api_url: str | None = None
 ) -> list[dict[str, Any]]:
-    """Fetch raw elements from Overpass using the configured query."""
+    """Fetch raw elements from Overpass using the configured query with retries and mirrors."""
     query = build_overpass_query(country_code=country_code)
     encoded = parse.urlencode({"data": query}).encode("utf-8")
-    http_request = request.Request(
-        api_url,
-        data=encoded,
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        method="POST",
-    )
-    try:
-        with request.urlopen(http_request, timeout=180) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except error.HTTPError as exc:  # pragma: no cover - live API
-        details = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Overpass request failed with {exc.code}: {details}") from exc
-    except error.URLError as exc:  # pragma: no cover - live API
-        raise RuntimeError(f"Overpass request failed: {exc.reason}") from exc
-    return payload.get("elements", [])
+
+    # If api_url is provided, try it first. Always include mirrors as fallback.
+    urls = [api_url] if api_url else []
+    for mirror in OVERPASS_API_URLS:
+        if mirror not in urls:
+            urls.append(mirror)
+
+    last_exc: Exception | None = None
+    for url in urls:
+        for attempt in range(3):  # Retry up to 3 times per URL
+            http_request = request.Request(
+                url,
+                data=encoded,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                method="POST",
+            )
+            try:
+                with request.urlopen(http_request, timeout=180) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                    return payload.get("elements", [])
+            except error.HTTPError as exc:
+                last_exc = exc
+                # Retry on 429 (Too Many Requests) or 5xx (Server Errors like 504)
+                if exc.code == 429 or 500 <= exc.code <= 599:
+                    time.sleep(2**attempt)
+                    continue
+                details = exc.read().decode("utf-8", errors="replace")
+                raise RuntimeError(f"Overpass request failed with {exc.code}: {details}") from exc
+            except (error.URLError, TimeoutError) as exc:
+                last_exc = exc
+                time.sleep(2**attempt)
+                continue
+
+    # All URLs and retries exhausted
+    if isinstance(last_exc, error.HTTPError):
+        details = last_exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"All Overpass mirrors failed. Last error {last_exc.code}: {details}"
+        ) from last_exc
+    raise RuntimeError(f"All Overpass mirrors failed: {last_exc}") from last_exc
 
 
 def coordinate_to_grid(lat: float, lon: float) -> tuple[int, int]:
@@ -132,13 +163,29 @@ def reverse_geocode_area(
         method="GET",
     )
     try:
-        with request.urlopen(http_request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except error.HTTPError as exc:  # pragma: no cover - live API
-        details = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Nominatim reverse request failed with {exc.code}: {details}") from exc
-    except error.URLError as exc:  # pragma: no cover - live API
-        raise RuntimeError(f"Nominatim reverse request failed: {exc.reason}") from exc
+        payload: dict[str, Any] = {}
+        for attempt in range(3):  # Retry up to 3 times
+            try:
+                with request.urlopen(http_request, timeout=30) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                    break
+            except error.HTTPError as exc:
+                if attempt < 2 and (exc.code == 429 or 500 <= exc.code <= 599):
+                    time.sleep(2**attempt + 1)  # Extra second for Nominatim
+                    continue
+                details = exc.read().decode("utf-8", errors="replace")
+                raise RuntimeError(
+                    f"Nominatim reverse request failed with {exc.code}: {details}"
+                ) from exc
+            except (error.URLError, TimeoutError) as exc:
+                if attempt < 2:
+                    time.sleep(2**attempt + 1)
+                    continue
+                raise RuntimeError(f"Nominatim reverse request failed: {exc}") from exc
+    except Exception as exc:  # pragma: no cover - live API
+        if isinstance(exc, RuntimeError):
+            raise
+        raise RuntimeError(f"Nominatim reverse request failed: {exc}") from exc
 
     address = payload.get("address", {})
     return (
@@ -346,7 +393,7 @@ def import_osm_gyms(
     *,
     limit: int = 100,
     country_code: str = "SG",
-    api_url: str = OVERPASS_API_URL,
+    api_url: str | None = None,
     resolve_areas: bool = True,
     reverse_geocode_throttle_seconds: float = 1.1,
     user_agent: str = DEFAULT_USER_AGENT,

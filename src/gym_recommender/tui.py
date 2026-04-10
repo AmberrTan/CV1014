@@ -52,13 +52,43 @@ def _format_gym_details(gym: GymRecord) -> str:
         if gym["is_24_hours"]
         else f"{gym['opening_time']:04d}-{gym['closing_time']:04d}"
     )
-    return (
-        f"{gym['gym_name']} ({gym['area']})\n"
-        f"Address: {gym['address']}\n"
-        f"Price: ${gym['monthly_price']:.2f}/month | Day pass ${gym['day_pass_price']:.2f}\n"
-        f"Rating: {gym['rating']:.1f} | Type: {gym['gym_type']} | Hours: {hours}\n"
-        f"Facilities: {facilities}"
-    )
+    lines = [
+        f"Name:       {gym['gym_name']}",
+        f"Area:       {gym['area']}",
+        f"Address:    {gym['address']}",
+        f"Price:      ${gym['monthly_price']:.2f}/month (Day pass: ${gym['day_pass_price']:.2f})",
+        f"Rating:     {gym['rating']:.1f} | Type: {gym['gym_type']}",
+        f"Hours:      {hours}",
+        f"Facilities: {facilities}",
+    ]
+    if gym.get("openstreetmap"):
+        osm = gym["openstreetmap"]
+        if osm.get("website"):
+            lines.append(f"Website:    {osm['website']}")
+        if osm.get("phone"):
+            lines.append(f"Phone:      {osm['phone']}")
+    return "\n".join(lines)
+
+
+class GymDetailScreen(Screen):
+    """Screen to display full details for a single gym."""
+
+    BINDINGS = [
+        ("escape", "dismiss", "Back"),
+        ("enter", "dismiss", "Back"),
+    ]
+
+    def __init__(self, gym: GymRecord):
+        super().__init__()
+        self.gym = gym
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        with VerticalScroll(id="detail-container"):
+            yield Label(f"Detailed View: {self.gym['gym_name']}", id="detail-title")
+            yield Static(_format_gym_details(self.gym), id="detail-content")
+            yield Label("\nPress Escape or Enter to return.", id="detail-footer")
+        yield Footer()
 
 
 def _parse_optional_int(value: str) -> int | None:
@@ -115,6 +145,11 @@ class BrowseScreen(Screen):
         item = getattr(event.item, "data", None)
         if isinstance(item, GymListItem):
             details.update(_format_gym_details(item.gym))
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        item = getattr(event.item, "data", None)
+        if isinstance(item, GymListItem):
+            self.app.push_screen(GymDetailScreen(item.gym))
 
 
 class SearchScreen(Screen):
@@ -206,6 +241,11 @@ class SearchScreen(Screen):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id and event.input.id.startswith("search-"):
             self._run_search()
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        item = getattr(event.item, "data", None)
+        if isinstance(item, GymListItem):
+            self.app.push_screen(GymDetailScreen(item.gym))
 
 
 class CompareScreen(Screen):
@@ -311,6 +351,35 @@ class GymTuiApp(App):
 
     #compare-table {
       height: 1fr;
+    }
+
+    #detail-container {
+      padding: 2;
+      border: double $accent;
+      margin: 2 4;
+      background: $panel;
+      height: auto;
+      max-height: 80%;
+    }
+
+    #detail-title {
+      text-style: bold;
+      color: $accent;
+      margin-bottom: 1;
+      width: 100%;
+      text-align: center;
+    }
+
+    #detail-content {
+      padding: 1;
+    }
+
+    #detail-footer {
+      margin-top: 1;
+      text-style: italic;
+      color: $text-muted;
+      width: 100%;
+      text-align: center;
     }
     """
 

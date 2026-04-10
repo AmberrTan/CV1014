@@ -28,13 +28,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data/gyms_osm_sg.json"),
-        help="Output JSON file for the imported gyms.",
+        default=Path("data/gyms.json"),
+        help="Output JSON file for the imported gyms (defaults to data/gyms.json).",
     )
     parser.add_argument(
         "--api-url",
-        default=os.environ.get("OVERPASS_API_URL", OVERPASS_API_URL),
-        help="Overpass interpreter endpoint.",
+        default=os.environ.get("OVERPASS_API_URL"),
+        help="Overpass interpreter endpoint (defaults to trying multiple mirrors if not specified).",
     )
     parser.add_argument(
         "--resolve-areas",
