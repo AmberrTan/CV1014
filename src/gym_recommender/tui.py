@@ -21,7 +21,20 @@ from textual.widgets import (
 from gym_recommender.data import load_database
 from gym_recommender.models import GymRecord, SearchFilters
 from gym_recommender.search import search_gyms
-from gym_recommender.services import compare_gym_records
+
+
+def compare_gym_records(gyms: list[GymRecord], gym_ids: list[int]) -> list[GymRecord]:
+    if len(gym_ids) < 2 or len(gym_ids) > 3:
+        raise ValueError("Please compare 2 or 3 gyms")
+    if len(set(gym_ids)) != len(gym_ids):
+        raise ValueError("Gym comparison requires 2 or 3 distinct gym IDs")
+
+    gym_lookup = {gym["gym_id"]: gym for gym in gyms}
+    missing_ids = [gym_id for gym_id in gym_ids if gym_id not in gym_lookup]
+    if missing_ids:
+        raise ValueError("One or more gyms were not found")
+
+    return [gym_lookup[gym_id] for gym_id in gym_ids]
 
 
 @dataclass
@@ -248,7 +261,7 @@ class CompareScreen(Screen):
             self.query_one("#compare-table", DataTable).clear(columns=True)
             return
         try:
-            gyms = compare_gym_records(unique_ids)
+            gyms = compare_gym_records(self.app.get_gyms(), unique_ids)
         except ValueError as exc:
             status.update(str(exc))
             self.query_one("#compare-table", DataTable).clear(columns=True)

@@ -5,33 +5,6 @@ from __future__ import annotations
 from typing import TypedDict
 
 
-class GoogleMapsLocation(TypedDict, total=False):
-    """Location payload from Google Maps enrichment."""
-
-    latitude: float | None
-    longitude: float | None
-
-
-class GoogleMapsData(TypedDict, total=False):
-    """Enriched Google Maps metadata for a gym."""
-
-    place_id: str | None
-    display_name: str | None
-    formatted_address: str | None
-    location: GoogleMapsLocation
-    google_maps_uri: str | None
-    website_uri: str | None
-    international_phone_number: str | None
-    business_status: str | None
-    primary_type: str | None
-    types: list[str]
-    rating: float | None
-    user_rating_count: int | None
-    open_now: bool | None
-    weekday_descriptions: list[str]
-    fetched_at: str
-
-
 class OpenStreetMapData(TypedDict, total=False):
     """Enriched OpenStreetMap metadata for a gym."""
 
@@ -85,7 +58,6 @@ class GymRecordBase(TypedDict):
 class GymRecord(GymRecordBase, total=False):
     """Gym record with optional enrichment payloads."""
 
-    google_maps: GoogleMapsData
     openstreetmap: OpenStreetMapData
 
 

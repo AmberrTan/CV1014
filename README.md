@@ -1,17 +1,21 @@
 # CV1014
 
-Gym recommendation project with a Python console app, Textual TUI, and FastAPI backend.
+Gym recommendation project focused on a Textual TUI and an OpenStreetMap ingestion pipeline.
 
 ## Run
 
 ```bash
 uv sync
-uv run python scripts/start_app.py console
-uv run python scripts/start_app.py api
 uv run gym-recommender-tui
+```
+
+## Data Import (OpenStreetMap)
+
+```bash
+uv run python scripts/import_osm_gyms.py --limit 100 --output data/gyms_osm_sg.json
 ```
 
 ## Notes
 
-- The repository is focused on CLI/TUI workflows.
-- The FastAPI backend is available for API-based usage.
+- The repository is focused on TUI workflows.
+- The default dataset lives at `data/gyms.json`.
