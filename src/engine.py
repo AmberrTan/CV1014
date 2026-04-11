@@ -1,5 +1,5 @@
 from geopy.distance import geodesic
-from typing import List, Dict, Iterable, Optional, Tuple
+from typing import List, Dict, Optional, Tuple
 import httpx
 import re
 import logging
@@ -65,19 +65,7 @@ def extract_osm_facilities(tags: Dict[str, str]) -> List[str]:
 TRUTHY_REGEX = "yes|true|1|y"
 
 
-def _escape_regex_values(values: Iterable[str]) -> str:
-    escaped = [re.escape(value) for value in values if value]
-    return "|".join(escaped)
-
-
-def _build_filter_suffixes(
-    user: UserProfile,
-    *,
-    sport_filters: Optional[List[str]] = None,
-    equipment_filters: Optional[List[str]] = None,
-) -> List[str]:
-    if sport_filters is None or equipment_filters is None:
-        sport_filters, equipment_filters = _get_normalized_filters(user)
+def _build_filter_suffixes(user: UserProfile) -> List[str]:
     suffixes: List[str] = []
 
     if user.access_24h:
@@ -93,31 +81,7 @@ def _build_filter_suffixes(
     if user.female_friendly:
         suffixes.append(f'["female_friendly"~"{TRUTHY_REGEX}"]')
 
-    sport_values = _escape_regex_values(sport_filters)
-    if sport_values:
-        suffixes.append(f'["sport"~"{sport_values}"]')
-
-    equipment_values = _escape_regex_values(equipment_filters)
-    if equipment_values:
-        suffixes.append(f'["equipment"~"{equipment_values}"]')
-
     return suffixes or [""]
-
-
-def _sport_regex_with_user(
-    user: Optional[UserProfile],
-    base_regex: str,
-    *,
-    sport_filters: Optional[List[str]] = None,
-) -> str:
-    if not user:
-        return base_regex
-    if sport_filters is None:
-        sport_filters, _ = _get_normalized_filters(user)
-    extra = _escape_regex_values(sport_filters)
-    if extra:
-        return f"{base_regex}|{extra}"
-    return base_regex
 
 
 def _build_selector_parts(
@@ -126,76 +90,35 @@ def _build_selector_parts(
     location_clause: str,
     *,
     user: Optional[UserProfile] = None,
-    sport_filters: Optional[List[str]] = None,
 ) -> str:
-    if user and sport_filters is None:
-        sport_filters, _ = _get_normalized_filters(user)
     parts = []
     for base in selectors:
         for suffix in suffixes:
-            if '["sport"~' in base and user:
-                has_sport_filters = bool(sport_filters)
-                if has_sport_filters and '["sport"~' in suffix:
-                    continue
-                # Avoid adding a second sport filter on top of the sports_centre base.
             parts.append(f"{base}{suffix}{location_clause}")
     return "".join(parts)
 
 
-def _get_normalized_filters(user: Optional[UserProfile]) -> Tuple[List[str], List[str]]:
-    if not user:
-        return [], []
-    return (
-        normalize_user_filters(user.sport_filters),
-        normalize_user_filters(user.equipment_filters),
-    )
-
-
 def build_overpass_query(lat: float, lon: float, radius_m: int, user: Optional[UserProfile] = None) -> str:
-    sport_filters, equipment_filters = _get_normalized_filters(user)
-    suffixes = (
-        _build_filter_suffixes(
-            user,
-            sport_filters=sport_filters,
-            equipment_filters=equipment_filters,
-        )
-        if user
-        else [""]
-    )
+    suffixes = _build_filter_suffixes(user) if user else [""]
     selectors = [
         'nwr["leisure"="fitness_centre"]',
         'nwr["leisure"="fitness_station"]',
-        f'nwr["leisure"="sports_centre"]["sport"~"{_sport_regex_with_user(user, "fitness|weightlifting|crossfit|gym", sport_filters=sport_filters)}"]',
+        'nwr["leisure"="sports_centre"]["sport"~"fitness|weightlifting|crossfit|gym"]',
         'nwr["amenity"="gym"]',
     ]
     location_clause = f"(around:{radius_m},{lat},{lon});"
-    parts = _build_selector_parts(
-        selectors,
-        suffixes,
-        location_clause,
-        user=user,
-        sport_filters=sport_filters,
-    )
+    parts = _build_selector_parts(selectors, suffixes, location_clause, user=user)
     return "[out:json][timeout:120];(" + parts + ");out center tags;"
 
 
 def build_overpass_country_query(country_code: str = "SG", user: Optional[UserProfile] = None) -> str:
-    sport_filters, equipment_filters = _get_normalized_filters(user)
-    suffixes = (
-        _build_filter_suffixes(
-            user,
-            sport_filters=sport_filters,
-            equipment_filters=equipment_filters,
-        )
-        if user
-        else [""]
-    )
+    suffixes = _build_filter_suffixes(user) if user else [""]
     selectors = [
         'nwr["amenity"="gym"]',
         'nwr["leisure"="fitness_centre"]',
     ]
     location_clause = "(area.searchArea);"
-    parts = _build_selector_parts(selectors, suffixes, location_clause, sport_filters=sport_filters)
+    parts = _build_selector_parts(selectors, suffixes, location_clause)
     return (
         "[out:json][timeout:120];"
         f'area["ISO3166-1"="{country_code}"][admin_level=2]->.searchArea;'
@@ -220,36 +143,14 @@ def get_element_location(element: Dict[str, object]) -> Optional[Tuple[float, fl
     return None
 
 
-def normalize_user_filters(values: Iterable[str]) -> List[str]:
-    normalized = []
-    for value in values:
-        if value is None:
-            continue
-        cleaned = str(value).strip().lower()
-        if cleaned:
-            normalized.append(cleaned)
-    return normalized
-
-
 def user_has_hard_filters(user: UserProfile) -> bool:
     return bool(
-        user.sport_filters
-        or user.equipment_filters
-        or user.access_24h
+        user.access_24h
         or user.requires_classes
     )
 
 
 def gym_matches_hard_filters(user: UserProfile, gym: Gym) -> bool:
-    sport_filters = set(normalize_user_filters(user.sport_filters))
-    equipment_filters = set(normalize_user_filters(user.equipment_filters))
-    gym_sports = set(normalize_user_filters(gym.sports))
-    gym_equipment = set(normalize_user_filters(gym.equipment))
-
-    if sport_filters and not gym_sports.intersection(sport_filters):
-        return False
-    if equipment_filters and not gym_equipment.intersection(equipment_filters):
-        return False
     if user.access_24h and "24h" not in gym.facilities:
         return False
     if user.requires_classes and "classes" not in gym.facilities:
@@ -523,6 +424,8 @@ def get_recommendations(user: UserProfile, gyms: List[Gym]) -> List[Recommendati
 
     for gym in filtered_gyms:
         distance_km = geodesic(user.preferred_location, gym.location).km
+        if distance_km > user.max_travel_distance_km:
+            continue
 
         d_score = calculate_distance_score(distance_km, user.max_travel_distance_km)
         b_score = calculate_budget_score(gym.price, user.budget_range)

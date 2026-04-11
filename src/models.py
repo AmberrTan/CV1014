@@ -26,8 +26,6 @@ class UserProfile(BaseModel):
     requires_shower_lockers: bool = False
     prefers_less_crowded: bool = False
     female_friendly: bool = False
-    sport_filters: List[str] = []
-    equipment_filters: List[str] = []
     max_travel_distance_km: float
 
 class UserQuery(BaseModel):

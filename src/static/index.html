@@ -44,16 +44,6 @@
                 </div>
             </div>
 
-            <div class="filter-group">
-                <label for="sport_filters">Sports (comma-separated)</label>
-                <input type="text" id="sport_filters" placeholder="yoga, fitness, weightlifting">
-            </div>
-
-            <div class="filter-group">
-                <label for="equipment_filters">Equipment (comma-separated)</label>
-                <input type="text" id="equipment_filters" placeholder="treadmill, squat rack">
-            </div>
-
             <button id="find-btn">Find My Best Match</button>
         </section>
 
@@ -82,14 +72,6 @@
         function readNumber(inputId, fallbackValue) {
             const rawValue = parseFloat(document.getElementById(inputId).value);
             return Number.isFinite(rawValue) ? rawValue : fallbackValue;
-        }
-
-        function readList(inputId) {
-            const rawValue = document.getElementById(inputId).value || '';
-            return rawValue
-                .split(/[;,]/)
-                .map(value => value.trim())
-                .filter(value => value.length > 0);
         }
 
         async function loadProfile(userId) {
@@ -153,8 +135,6 @@
                 requires_classes: document.getElementById('requires_classes').checked,
                 requires_shower_lockers: document.getElementById('requires_shower_lockers').checked,
                 female_friendly: document.getElementById('female_friendly').checked,
-                sport_filters: readList('sport_filters'),
-                equipment_filters: readList('equipment_filters'),
                 max_travel_distance_km: readNumber('distance', 5)
             };
 
@@ -195,7 +175,8 @@
             }
 
             resultsDiv.innerHTML = gyms.map(gym => `
-                <div class="gym-card">
+                <fieldset class="gym-card">
+                    <legend>Gym Match</legend>
                     <div class="gym-info">
                         <div class="score-badge">Match: ${Math.round(gym.score * 100)}%</div>
                         <div class="gym-name">${gym.name}</div>
@@ -208,7 +189,7 @@
                         ${renderExpBar('Facilities', gym.explanation.facilities)}
                         ${renderExpBar('Rating', gym.explanation.rating)}
                     </div>
-                </div>
+                </fieldset>
             `).join('');
         }
 
