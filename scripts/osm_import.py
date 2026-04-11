@@ -9,7 +9,10 @@ from typing import Any, cast
 from urllib import error, parse, request
 
 from gym_recommender.models import GymRecord
-from gym_recommender.openstreetmap_enrichment import DEFAULT_USER_AGENT, build_openstreetmap_payload
+from gym_recommender.openstreetmap_enrichment import (
+    DEFAULT_USER_AGENT,
+    build_openstreetmap_payload,
+)
 
 OVERPASS_API_URLS = [
     "https://overpass-api.de/api/interpreter",
@@ -73,7 +76,9 @@ def fetch_overpass_elements(
                     time.sleep(2**attempt)
                     continue
                 details = exc.read().decode("utf-8", errors="replace")
-                raise RuntimeError(f"Overpass request failed with {exc.code}: {details}") from exc
+                raise RuntimeError(
+                    f"Overpass request failed with {exc.code}: {details}"
+                ) from exc
             except (error.URLError, TimeoutError) as exc:
                 last_exc = exc
                 time.sleep(2**attempt)
@@ -215,9 +220,15 @@ def _infer_gym_type(name: str, tags: dict[str, str]) -> str:
         return "public"
     if any(keyword in haystack for keyword in ["pilates", "yoga", "barre"]):
         return "boutique"
-    if any(keyword in haystack for keyword in ["crossfit", "f45", "bft", "ufit", "orangetheory"]):
+    if any(
+        keyword in haystack
+        for keyword in ["crossfit", "f45", "bft", "ufit", "orangetheory"]
+    ):
         return "group training"
-    if any(keyword in haystack for keyword in ["muay", "boxing", "mma", "taekwondo", "martial"]):
+    if any(
+        keyword in haystack
+        for keyword in ["muay", "boxing", "mma", "taekwondo", "martial"]
+    ):
         return "martial arts"
     if "women" in haystack or "ladies" in haystack:
         return "women-only"
@@ -314,12 +325,23 @@ def _infer_beginner_friendly(name: str, gym_type: str, tags: dict[str, str]) -> 
 def _infer_classes_available(gym_type: str, tags: dict[str, str]) -> bool:
     """Infer whether classes are likely available."""
     sport = tags.get("sport", "").lower()
-    return gym_type in {"boutique", "group training", "martial arts", "women-only"} or bool(sport)
+    return gym_type in {
+        "boutique",
+        "group training",
+        "martial arts",
+        "women-only",
+    } or bool(sport)
 
 
 def _infer_trainer_available(gym_type: str) -> bool:
     """Infer trainer availability based on gym type."""
-    return gym_type in {"commercial", "boutique", "group training", "martial arts", "women-only"}
+    return gym_type in {
+        "commercial",
+        "boutique",
+        "group training",
+        "martial arts",
+        "women-only",
+    }
 
 
 def _normalize_element(element: dict[str, Any], gym_id: int) -> GymRecord | None:
@@ -356,7 +378,8 @@ def _normalize_element(element: dict[str, Any], gym_id: int) -> GymRecord | None
             "gym_type": gym_type,
             "facilities": _infer_facilities(name, tags, gym_type),
             "beginner_friendly": _infer_beginner_friendly(name, gym_type, tags),
-            "female_friendly": gym_type == "women-only" or tags.get("female") in {"yes", "only"},
+            "female_friendly": gym_type == "women-only"
+            or tags.get("female") in {"yes", "only"},
             "student_discount": gym_type == "public",
             "peak_crowd_level": "high"
             if gym_type in {"commercial", "group training"}
@@ -379,7 +402,9 @@ def _normalize_element(element: dict[str, Any], gym_id: int) -> GymRecord | None
                     "importance": None,
                     "place_rank": None,
                     "address": {
-                        key: value for key, value in tags.items() if key.startswith("addr:")
+                        key: value
+                        for key, value in tags.items()
+                        if key.startswith("addr:")
                     },
                     "namedetails": {"name": name},
                     "extratags": tags,
@@ -412,7 +437,11 @@ def import_osm_gyms(
         gym = _normalize_element(element, gym_id=len(normalized) + 1)
         if gym is None:
             continue
-        dedupe_key = (gym["gym_name"].casefold(), gym["x_coordinate"], gym["y_coordinate"])
+        dedupe_key = (
+            gym["gym_name"].casefold(),
+            gym["x_coordinate"],
+            gym["y_coordinate"],
+        )
         if dedupe_key in seen:
             continue
         seen.add(dedupe_key)
@@ -425,7 +454,9 @@ def import_osm_gyms(
                 cache_key = (round(lat, 5), round(lon, 5))
                 area_name = reverse_cache.get(cache_key)
                 if area_name is None:
-                    area_name = reverse_geocode_area(lat, lon, user_agent=user_agent, email=email)
+                    area_name = reverse_geocode_area(
+                        lat, lon, user_agent=user_agent, email=email
+                    )
                     reverse_cache[cache_key] = area_name or gym["area"]
                     time.sleep(reverse_geocode_throttle_seconds)
                 if area_name:
@@ -434,5 +465,7 @@ def import_osm_gyms(
         normalized.append(gym)
 
     if output_path is not None:
-        output_path.write_text(f"{json.dumps(normalized, indent=2)}\n", encoding="utf-8")
+        output_path.write_text(
+            f"{json.dumps(normalized, indent=2)}\n", encoding="utf-8"
+        )
     return normalized

@@ -106,7 +106,9 @@ def _parse_optional_float(value: str) -> float | None:
         return None
 
 
-def resolve_area_match(raw_area: str, areas: list[str]) -> tuple[str | None, str | None]:
+def resolve_area_match(
+    raw_area: str, areas: list[str]
+) -> tuple[str | None, str | None]:
     cleaned = raw_area.strip()
     if not cleaned:
         return None, None
@@ -119,7 +121,10 @@ def resolve_area_match(raw_area: str, areas: list[str]) -> tuple[str | None, str
         return partial_matches[0], f"Using area '{partial_matches[0]}' for '{cleaned}'."
     if not partial_matches:
         return None, f"Area '{cleaned}' not found. Try: {', '.join(areas)}."
-    return None, f"Area '{cleaned}' matches multiple areas: {', '.join(partial_matches)}."
+    return (
+        None,
+        f"Area '{cleaned}' matches multiple areas: {', '.join(partial_matches)}.",
+    )
 
 
 class BrowseScreen(Screen):
@@ -163,7 +168,10 @@ class SearchScreen(Screen):
                     yield Input(placeholder="Area", id="search-area")
                     yield Input(placeholder="Max budget", id="search-max-budget")
                     yield Input(placeholder="Min rating", id="search-min-rating")
-                    yield Input(placeholder="Facilities (comma separated)", id="search-facilities")
+                    yield Input(
+                        placeholder="Facilities (comma separated)",
+                        id="search-facilities",
+                    )
                     yield Input(placeholder="Open at (HHMM)", id="search-open-at")
                     yield Input(placeholder="Gym type", id="search-gym-type")
                     yield Input(placeholder="User X coordinate", id="search-user-x")
@@ -176,10 +184,14 @@ class SearchScreen(Screen):
 
     def _collect_filters(self) -> SearchFilters:
         filters: SearchFilters = {}
-        max_budget = _parse_optional_float(self.query_one("#search-max-budget", Input).value)
+        max_budget = _parse_optional_float(
+            self.query_one("#search-max-budget", Input).value
+        )
         if max_budget is not None:
             filters["max_budget"] = max_budget
-        min_rating = _parse_optional_float(self.query_one("#search-min-rating", Input).value)
+        min_rating = _parse_optional_float(
+            self.query_one("#search-min-rating", Input).value
+        )
         if min_rating is not None:
             filters["min_rating"] = min_rating
         facilities_raw = self.query_one("#search-facilities", Input).value.strip()

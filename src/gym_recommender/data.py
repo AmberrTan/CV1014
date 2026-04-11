@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
-from gym_recommender.config import ROOT_DIR, load_dotenv
 from gym_recommender.models import GymRecord
 
-load_dotenv()
-DEFAULT_DATABASE_PATH = ROOT_DIR / os.environ.get("GYM_DATABASE_PATH", "data/gyms.json")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+DEFAULT_DATABASE_PATH = ROOT_DIR / "data/gyms.json"
 
 
 def load_database(path: Path = DEFAULT_DATABASE_PATH) -> list[GymRecord]:

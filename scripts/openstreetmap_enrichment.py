@@ -27,7 +27,9 @@ class OpenStreetMapEnrichmentResult:
     message: str
 
 
-def build_osm_search_query(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_HINT) -> str:
+def build_osm_search_query(
+    gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_HINT
+) -> str:
     """Build a search string for the OSM Nominatim API."""
     query_parts = [gym["gym_name"]]
     if gym.get("address"):
@@ -39,7 +41,9 @@ def build_osm_search_query(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_H
     return ", ".join(part.strip() for part in query_parts if part and part.strip())
 
 
-def build_osm_search_queries(gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_HINT) -> list[str]:
+def build_osm_search_queries(
+    gym: GymRecord, country_hint: str = DEFAULT_COUNTRY_HINT
+) -> list[str]:
     """Return de-duplicated query variants for better matching."""
     query_variants = [
         [gym["gym_name"], gym.get("address"), gym.get("area"), country_hint],
@@ -80,7 +84,9 @@ def _read_json(url: str, *, user_agent: str) -> list[dict[str, Any]]:
                 time.sleep(2**attempt + 1)  # Extra second for Nominatim
                 continue
             details = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Nominatim request failed with {exc.code}: {details}") from exc
+            raise RuntimeError(
+                f"Nominatim request failed with {exc.code}: {details}"
+            ) from exc
         except (error.URLError, TimeoutError) as exc:
             last_exc = exc
             if attempt < 2:
@@ -93,7 +99,9 @@ def _read_json(url: str, *, user_agent: str) -> list[dict[str, Any]]:
         raise RuntimeError(
             f"Nominatim request failed after retries with {last_exc.code}: {details}"
         ) from last_exc
-    raise RuntimeError(f"Nominatim request failed after retries: {last_exc}") from last_exc
+    raise RuntimeError(
+        f"Nominatim request failed after retries: {last_exc}"
+    ) from last_exc
 
 
 def search_place(
@@ -147,7 +155,9 @@ def build_openstreetmap_payload(match: dict[str, Any]) -> OpenStreetMapData:
     }
 
 
-def merge_openstreetmap_data(gym: GymRecord, openstreetmap_payload: OpenStreetMapData) -> GymRecord:
+def merge_openstreetmap_data(
+    gym: GymRecord, openstreetmap_payload: OpenStreetMapData
+) -> GymRecord:
     """Return a gym record with OpenStreetMap enrichment attached."""
     merged = dict(gym)
     merged["openstreetmap"] = openstreetmap_payload
@@ -217,7 +227,9 @@ def enrich_database(
             )
             continue
 
-        updated_gyms.append(merge_openstreetmap_data(gym, build_openstreetmap_payload(match)))
+        updated_gyms.append(
+            merge_openstreetmap_data(gym, build_openstreetmap_payload(match))
+        )
         results.append(
             OpenStreetMapEnrichmentResult(
                 gym_id=gym["gym_id"],
