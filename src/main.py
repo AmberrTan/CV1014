@@ -25,14 +25,13 @@ async def recommend_gyms(user: UserProfile):
         user=user,
     )
     
-    all_gyms = real_gyms if real_gyms else []
+    gyms = real_gyms or []
     if user_has_hard_filters(user):
-        all_gyms = all_gyms + MOCK_GYMS
-        return get_recommendations(user, all_gyms)
+        return get_recommendations(user, gyms + MOCK_GYMS)
 
     # Merge with mock/synthetic data if OSM returns few results
-    all_gyms = ensure_minimum_gyms(user, all_gyms)
-    return get_recommendations(user, all_gyms)
+    gyms = ensure_minimum_gyms(user, gyms)
+    return get_recommendations(user, gyms)
 
 
 @app.post("/profile", response_model=UserLocationProfile)

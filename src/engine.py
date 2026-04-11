@@ -5,6 +5,7 @@ import re
 import logging
 import asyncio
 from .models import UserProfile, Gym, Recommendation, ScoreExplanation
+from .utils import split_normalized
 from .data import MOCK_GYMS
 
 MIN_RESULTS = 15
@@ -21,14 +22,7 @@ DEFAULT_USER_AGENT = "CV1014-GymRecommendationSystem/1.0 (+https://openstreetmap
 
 
 def normalize_tag_values(value: str) -> List[str]:
-    if not value:
-        return []
-    parts = []
-    for chunk in value.replace(",", ";").split(";"):
-        cleaned = chunk.strip().lower()
-        if cleaned:
-            parts.append(cleaned)
-    return parts
+    return split_normalized(value)
 
 
 def extract_osm_values(tags: Dict[str, str], key: str) -> List[str]:
@@ -112,6 +106,24 @@ def _sport_regex_with_user(user: Optional[UserProfile], base_regex: str) -> str:
     return base_regex
 
 
+def _build_selector_parts(
+    selectors: List[str],
+    suffixes: List[str],
+    location_clause: str,
+    *,
+    user: Optional[UserProfile] = None,
+) -> str:
+    parts = []
+    for base in selectors:
+        for suffix in suffixes:
+            if '["sport"~' in base and user and normalize_user_filters(user.sport_filters):
+                # Avoid adding a second sport filter on top of the sports_centre base.
+                if '["sport"~' in suffix:
+                    continue
+            parts.append(f"{base}{suffix}{location_clause}")
+    return "".join(parts)
+
+
 def build_overpass_query(lat: float, lon: float, radius_m: int, user: Optional[UserProfile] = None) -> str:
     suffixes = _build_filter_suffixes(user) if user else [""]
     selectors = [
@@ -120,15 +132,9 @@ def build_overpass_query(lat: float, lon: float, radius_m: int, user: Optional[U
         f'nwr["leisure"="sports_centre"]["sport"~"{_sport_regex_with_user(user, "fitness|weightlifting|crossfit|gym")}"]',
         'nwr["amenity"="gym"]',
     ]
-    parts = []
-    for base in selectors:
-        for suffix in suffixes:
-            if '["sport"~' in base and user and normalize_user_filters(user.sport_filters):
-                # Avoid adding a second sport filter on top of the sports_centre base.
-                if '["sport"~' in suffix:
-                    continue
-            parts.append(f"{base}{suffix}(around:{radius_m},{lat},{lon});")
-    return "[out:json][timeout:120];(" + "".join(parts) + ");out center tags;"
+    location_clause = f"(around:{radius_m},{lat},{lon});"
+    parts = _build_selector_parts(selectors, suffixes, location_clause, user=user)
+    return "[out:json][timeout:120];(" + parts + ");out center tags;"
 
 
 def build_overpass_country_query(country_code: str = "SG", user: Optional[UserProfile] = None) -> str:
@@ -137,15 +143,13 @@ def build_overpass_country_query(country_code: str = "SG", user: Optional[UserPr
         'nwr["amenity"="gym"]',
         'nwr["leisure"="fitness_centre"]',
     ]
-    parts = []
-    for base in selectors:
-        for suffix in suffixes:
-            parts.append(f"{base}{suffix}(area.searchArea);")
+    location_clause = "(area.searchArea);"
+    parts = _build_selector_parts(selectors, suffixes, location_clause)
     return (
         "[out:json][timeout:120];"
         f'area["ISO3166-1"="{country_code}"][admin_level=2]->.searchArea;'
         "("
-        + "".join(parts) +
+        + parts +
         ");out center tags;"
     )
 
@@ -267,6 +271,19 @@ def _filter_and_collect(
     return gyms, skipped_name, skipped_location
 
 
+def _log_sample_names(elements: List[Dict[str, object]], label: str) -> None:
+    sample_names = []
+    for element in elements[:5]:
+        tags = element.get("tags", {})
+        sample_names.append(tags.get("name") or "")
+    logger.info(
+        "%s elements total=%s sample_names=%s",
+        label,
+        len(elements),
+        sample_names,
+    )
+
+
 async def _fetch_overpass_payload(query: str, *, timeout: float, label: str) -> Optional[Dict[str, object]]:
     data = None
     async with httpx.AsyncClient(
@@ -342,15 +359,7 @@ async def fetch_real_gyms_from_osm(lat: float, lon: float, radius_km: float = 5.
             return []
 
         elements = data.get("elements", [])
-        sample_names = []
-        for element in elements[:5]:
-            tags = element.get("tags", {})
-            sample_names.append(tags.get("name") or "")
-        logger.info(
-            "OSM fetch elements total=%s sample_names=%s",
-            len(elements),
-            sample_names,
-        )
+        _log_sample_names(elements, "OSM fetch")
         gyms, skipped_name, skipped_location = _filter_and_collect(elements)
         deduped = dedupe_gyms_by_name_location(gyms)
         logger.info(
@@ -372,15 +381,7 @@ async def fetch_real_gyms_from_osm(lat: float, lon: float, radius_km: float = 5.
             return []
 
         elements = data.get("elements", [])
-        sample_names = []
-        for element in elements[:5]:
-            tags = element.get("tags", {})
-            sample_names.append(tags.get("name") or "")
-        logger.info(
-            "OSM country fetch elements total=%s sample_names=%s",
-            len(elements),
-            sample_names,
-        )
+        _log_sample_names(elements, "OSM country fetch")
         gyms, skipped_name, skipped_location = _filter_and_collect(
             elements,
             distance_origin=(lat, lon),
