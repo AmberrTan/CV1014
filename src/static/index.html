@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymMatch — Find Your Perfect Gym</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        header { background: white; border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .header-link { color: var(--primary); font-weight: 600; text-decoration: none; }
+        .header-link:hover { text-decoration: underline; }
+
+        main { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; padding: 2rem; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+        .filters { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); height: fit-content; position: sticky; top: 2rem; }
+        .filter-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        input[type="number"], input[type="text"], select { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; }
+        
+        .checkbox-group { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+        .checkbox-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; }
+
+        .button-row { display: flex; gap: 0.75rem; align-items: center; }
+
+        button#find-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button#find-btn:hover { background: var(--primary-hover); }
+        button#load-profile-btn { flex: 0 0 auto; background: white; color: var(--primary); border: 1px solid var(--border); padding: 0.6rem 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap; }
+        button#load-profile-btn:hover { border-color: var(--primary); color: var(--primary-hover); }
+        #profile-status { margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); min-height: 1.2em; }
+
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .gym-card { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; }
+        .gym-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .gym-info { padding: 1.5rem; flex: 1; }
+        .gym-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .gym-meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+        .score-badge { display: inline-block; background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem; margin-bottom: 1rem; }
+        
+        .explanation { border-top: 1px solid var(--border); padding: 1rem; background: #f1f5f9; }
+        .exp-bar-container { margin-bottom: 0.5rem; }
+        .exp-label { font-size: 0.75rem; display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .exp-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+        .exp-fill { height: 100%; background: var(--primary); border-radius: 3px; }
+
+        .loading { text-align: center; grid-column: 1 / -1; padding: 4rem; color: var(--text-muted); }
+        
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; }
+            .filters { position: static; }
+            .button-row { flex-direction: column; align-items: stretch; }
+            button#load-profile-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GymMatch SG</h1>
+        <a class="header-link" href="/profile">Profile</a>
+    </header>
+
+    <main>
+        <section class="filters">
+            <h2 style="margin-top: 0; font-size: 1.25rem;">Your Preferences</h2>
+
+            <div class="filter-group">
+                <label for="user_id">User ID</label>
+                <div class="button-row">
+                    <input type="text" id="user_id" value="demo_user" placeholder="Enter user ID">
+                    <button id="load-profile-btn" type="button">Load Profile</button>
+                </div>
+                <div id="profile-status"></div>
+            </div>
+            
+            <div class="filter-group">
+                <label>Max Monthly Budget (S$)</label>
+                <input type="number" id="budget" value="150" min="20">
+            </div>
+
+            <div class="filter-group">
+                <label>Max Distance (km)</label>
+                <input type="number" id="distance" value="5" min="1">
+            </div>
+
+            <div class="filter-group">
+                <label>Requirements</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" id="access_24h" checked> 24/7 Access</label>
+                    <label class="checkbox-item"><input type="checkbox" id="requires_classes"> Group Classes</label>
+                    <label class="checkbox-item"><input type="checkbox" id="requires_shower_lockers" checked> Showers & Lockers</label>
+                    <label class="checkbox-item"><input type="checkbox" id="female_friendly"> Female Friendly (hard filter)</label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="sport_filters">Sports (comma-separated)</label>
+                <input type="text" id="sport_filters" placeholder="yoga, fitness, weightlifting">
+            </div>
+
+            <div class="filter-group">
+                <label for="equipment_filters">Equipment (comma-separated)</label>
+                <input type="text" id="equipment_filters" placeholder="treadmill, squat rack">
+            </div>
+
+            <button id="find-btn">Find My Best Match</button>
+        </section>
+
+        <section id="results" class="results-grid">
+            <div class="loading">Set your preferences and click "Find My Best Match" to see recommendations.</div>
+        </section>
+    </main>
+
+    <script>
+        const defaultLocation = [1.2994, 103.8458]; // Dhoby Ghaut / Orchard Central
+        const appState = {
+            userId: 'demo_user',
+            preferredLocation: defaultLocation,
+            profileLoaded: false
+        };
+
+        const userIdInput = document.getElementById('user_id');
+        const profileStatus = document.getElementById('profile-status');
+        const loadProfileBtn = document.getElementById('load-profile-btn');
+        const findBtn = document.getElementById('find-btn');
+
+        function setProfileStatus(message, isError = false) {
+            profileStatus.textContent = message;
+            profileStatus.style.color = isError ? '#ef4444' : 'var(--text-muted)';
+        }
+
+        function readNumber(inputId, fallbackValue) {
+            const rawValue = parseFloat(document.getElementById(inputId).value);
+            return Number.isFinite(rawValue) ? rawValue : fallbackValue;
+        }
+
+        function readList(inputId) {
+            const rawValue = document.getElementById(inputId).value || '';
+            return rawValue
+                .split(/[;,]/)
+                .map(value => value.trim())
+                .filter(value => value.length > 0);
+        }
+
+        async function loadProfile(userId) {
+            const trimmedUserId = (userId || '').trim();
+            if (!trimmedUserId) {
+                setProfileStatus('Please enter a user ID.', true);
+                return;
+            }
+
+            setProfileStatus(`Loading profile for ${trimmedUserId}...`);
+
+            try {
+                const response = await fetch(`/profile/${encodeURIComponent(trimmedUserId)}`);
+                if (!response.ok) {
+                    throw new Error(`Profile request failed with status ${response.status}`);
+                }
+
+                const profile = await response.json();
+                if (!Array.isArray(profile.preferred_location) || profile.preferred_location.length !== 2) {
+                    throw new Error('Profile response did not include a valid preferred_location.');
+                }
+
+                appState.userId = trimmedUserId;
+                appState.preferredLocation = profile.preferred_location;
+                appState.profileLoaded = true;
+                userIdInput.value = trimmedUserId;
+                setProfileStatus(`Loaded profile for ${trimmedUserId}.`);
+            } catch (error) {
+                appState.userId = trimmedUserId;
+                appState.preferredLocation = defaultLocation;
+                appState.profileLoaded = false;
+                setProfileStatus(`Could not load profile for ${trimmedUserId}. Using default location.`, true);
+            }
+        }
+
+        userIdInput.addEventListener('input', () => {
+            appState.userId = userIdInput.value.trim();
+            appState.profileLoaded = false;
+            if (appState.userId) {
+                setProfileStatus('Profile not loaded for this user ID yet.');
+            } else {
+                setProfileStatus('');
+            }
+        });
+
+        loadProfileBtn.addEventListener('click', async () => {
+            await loadProfile(userIdInput.value);
+        });
+
+        findBtn.addEventListener('click', async () => {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">Finding best matches...</div>';
+
+            const currentUserId = userIdInput.value.trim() || 'demo_user';
+            const payload = {
+                user_id: currentUserId,
+                budget_range: [0, readNumber('budget', 0)],
+                preferred_location: appState.profileLoaded ? appState.preferredLocation : defaultLocation,
+                fitness_goals: ['general_fitness'],
+                access_24h: document.getElementById('access_24h').checked,
+                requires_classes: document.getElementById('requires_classes').checked,
+                requires_shower_lockers: document.getElementById('requires_shower_lockers').checked,
+                female_friendly: document.getElementById('female_friendly').checked,
+                sport_filters: readList('sport_filters'),
+                equipment_filters: readList('equipment_filters'),
+                max_travel_distance_km: readNumber('distance', 5)
+            };
+
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                renderResults(data);
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="loading" style="color: #ef4444;">Error: Could not connect to API. Make sure the server is running.</div>';
+            }
+        });
+
+        async function initializeFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const urlUserId = params.get('user_id');
+            if (urlUserId) {
+                userIdInput.value = urlUserId;
+                await loadProfile(urlUserId);
+                return;
+            }
+
+            appState.userId = userIdInput.value.trim() || 'demo_user';
+            appState.preferredLocation = defaultLocation;
+            appState.profileLoaded = false;
+            setProfileStatus('Using default location until a profile is loaded.');
+        }
+
+        function renderResults(gyms) {
+            const resultsDiv = document.getElementById('results');
+            if (gyms.length === 0) {
+                resultsDiv.innerHTML = '<div class="loading">No gyms found matching your criteria. Try increasing distance or budget.</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = gyms.map(gym => `
+                <div class="gym-card">
+                    <div class="gym-info">
+                        <div class="score-badge">Match: ${Math.round(gym.score * 100)}%</div>
+                        <div class="gym-name">${gym.name}</div>
+                        <div class="gym-meta">${gym.distance_km} km away • ${gym.explanation.budget > 0.9 ? 'Within Budget' : 'Pricey'}</div>
+                    </div>
+                    <div class="explanation">
+                        <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">WHY THIS MATCH?</div>
+                        ${renderExpBar('Distance', gym.explanation.distance)}
+                        ${renderExpBar('Price', gym.explanation.budget)}
+                        ${renderExpBar('Facilities', gym.explanation.facilities)}
+                        ${renderExpBar('Rating', gym.explanation.rating)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderExpBar(label, value) {
+            return `
+                <div class="exp-bar-container">
+                    <div class="exp-label"><span>${label}</span><span>${Math.round(value * 100)}%</span></div>
+                    <div class="exp-bar"><div class="exp-fill" style="width: ${value * 100}%"></div></div>
+                </div>
+            `;
+        }
+
+        initializeFromUrl();
+    </script>
+</body>
+</html>

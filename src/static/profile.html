@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymMatch — Profile</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #166534;
+            --success-bg: #dcfce7;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
+            --error-bg: #fee2e2;
+            --error-text: #b91c1c;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        header a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        main {
+            width: min(100%, 1200px);
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+        }
+
+        .panel h2 {
+            margin: 0 0 1rem;
+            font-size: 1.25rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        input, select, button, textarea {
+            width: 100%;
+            padding: 0.7rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font: inherit;
+            color: inherit;
+            background: white;
+        }
+
+        input:focus, select:focus, button:focus, textarea:focus {
+            outline: 2px solid rgba(37, 99, 235, 0.18);
+            outline-offset: 1px;
+            border-color: var(--primary);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            width: auto;
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        button:hover { transform: translateY(-1px); }
+
+        .primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .primary:hover { background: var(--primary-hover); }
+
+        .secondary {
+            background: white;
+            color: var(--text-main);
+        }
+
+        .helper {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            min-height: 3rem;
+            display: flex;
+            align-items: center;
+            border: 1px solid transparent;
+        }
+
+        .status.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .status.success {
+            background: var(--success-bg);
+            color: var(--success);
+            border-color: #bbf7d0;
+        }
+
+        .status.warning {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border-color: #fde68a;
+        }
+
+        .status.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border-color: #fecaca;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        .result-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            background: #fff;
+        }
+
+        .result-card:hover {
+            border-color: #93c5fd;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 14px rgba(15, 23, 42, 0.05);
+        }
+
+        .result-card strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-card small {
+            color: var(--text-muted);
+            display: block;
+            line-height: 1.4;
+        }
+
+        .empty-state {
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            color: var(--text-muted);
+            background: #f8fafc;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 920px) {
+            main { grid-template-columns: 1fr; }
+            header { padding: 1rem; }
+            main { padding: 1rem; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GymMatch SG</h1>
+        <a id="back-link" href="/">Back to home</a>
+    </header>
+
+    <main>
+        <section class="panel">
+            <h2>Profile Details</h2>
+            <p class="helper">Search for an address, choose a result, and the latitude/longitude fields will fill automatically.</p>
+
+            <div class="field">
+                <label for="user_id">User ID</label>
+                <input id="user_id" type="text" placeholder="e.g. demo_user">
+            </div>
+
+            <div class="field">
+                <label for="address_text">Address</label>
+                <textarea id="address_text" rows="3" placeholder="Type a street, landmark, or postcode"></textarea>
+            </div>
+
+            <div class="actions">
+                <button id="search-btn" class="secondary" type="button">Search Address</button>
+                <button id="load-btn" class="secondary" type="button">Load Profile</button>
+                <button id="save-btn" class="primary" type="button">Save Profile</button>
+            </div>
+
+            <div id="status" class="status info">Enter a user ID to save or load a profile.</div>
+        </section>
+
+        <section class="panel">
+            <h2>Location Search</h2>
+            <p class="helper">This page uses OSM Nominatim to search addresses. Pick one result to populate the coordinates below.</p>
+
+            <div class="field">
+                <label for="search_query">Search query</label>
+                <input id="search_query" type="text" placeholder="Search for an address">
+            </div>
+
+            <div class="field">
+                <label for="search_results">Results</label>
+                <select id="search_results" disabled>
+                    <option value="">Search for an address first</option>
+                </select>
+            </div>
+
+            <div class="grid">
+                <div class="field">
+                    <label for="lat">Latitude</label>
+                    <input id="lat" type="number" step="any" placeholder="1.3000">
+                </div>
+                <div class="field">
+                    <label for="lon">Longitude</label>
+                    <input id="lon" type="number" step="any" placeholder="103.8000">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="search_meta">Selected place</label>
+                <input id="search_meta" type="text" placeholder="No selection yet" readonly>
+            </div>
+
+            <div id="search-message" class="status warning" style="display:none;"></div>
+            <div id="results-container" class="results-list"></div>
+        </section>
+    </main>
+
+    <script>
+        const els = {
+            userId: document.getElementById('user_id'),
+            addressText: document.getElementById('address_text'),
+            searchQuery: document.getElementById('search_query'),
+            searchResults: document.getElementById('search_results'),
+            lat: document.getElementById('lat'),
+            lon: document.getElementById('lon'),
+            searchMeta: document.getElementById('search_meta'),
+            status: document.getElementById('status'),
+            searchMessage: document.getElementById('search-message'),
+            resultsContainer: document.getElementById('results-container'),
+            backLink: document.getElementById('back-link'),
+        };
+
+        let currentSearchResults = [];
+
+        function setStatus(message, type = 'info') {
+            els.status.className = `status ${type}`;
+            els.status.textContent = message;
+        }
+
+        function setSearchMessage(message, type = 'warning') {
+            els.searchMessage.style.display = 'flex';
+            els.searchMessage.className = `status ${type}`;
+            els.searchMessage.textContent = message;
+        }
+
+        function hideSearchMessage() {
+            els.searchMessage.style.display = 'none';
+            els.searchMessage.textContent = '';
+        }
+
+        function setBackLink() {
+            const userId = els.userId.value.trim();
+            const url = userId ? `/?user_id=${encodeURIComponent(userId)}` : '/';
+            els.backLink.href = url;
+        }
+
+        function populateResults(results) {
+            currentSearchResults = results;
+            els.searchResults.innerHTML = '';
+
+            if (!results.length) {
+                els.searchResults.disabled = true;
+                els.searchResults.innerHTML = '<option value="">No results found</option>';
+                els.resultsContainer.innerHTML = '<div class="empty-state">No matches. Try a broader query or a nearby landmark.</div>';
+                return;
+            }
+
+            els.searchResults.disabled = false;
+            els.searchResults.innerHTML = results.map((result, index) => `
+                <option value="${index}">${escapeHtml(result.display_name)}</option>
+            `).join('');
+            els.resultsContainer.innerHTML = results.map((result, index) => `
+                <div class="result-card" data-index="${index}">
+                    <strong>${escapeHtml(result.display_name)}</strong>
+                    <small>Lat ${formatCoord(result.lat)} · Lon ${formatCoord(result.lon)}</small>
+                </div>
+            `).join('');
+
+            els.resultsContainer.querySelectorAll('.result-card').forEach(card => {
+                card.addEventListener('click', () => selectResult(Number(card.dataset.index)));
+            });
+        }
+
+        function formatCoord(value) {
+            const num = Number(value);
+            return Number.isFinite(num) ? num.toFixed(6) : value;
+        }
+
+        function selectResult(index) {
+            const result = currentSearchResults[index];
+            if (!result) return;
+            els.searchResults.value = String(index);
+            els.lat.value = result.lat;
+            els.lon.value = result.lon;
+            els.addressText.value = result.display_name;
+            els.searchMeta.value = result.display_name;
+            setStatus(`Selected: ${result.display_name}`, 'success');
+            setBackLink();
+        }
+
+        async function searchAddress() {
+            const query = els.searchQuery.value.trim();
+            if (!query) {
+                setSearchMessage('Type an address before searching.', 'warning');
+                return;
+            }
+
+            hideSearchMessage();
+            els.resultsContainer.innerHTML = '<div class="empty-state">Searching for matches...</div>';
+            els.searchResults.disabled = true;
+            els.searchResults.innerHTML = '<option value="">Searching...</option>';
+            setStatus('Searching OSM Nominatim...', 'info');
+
+            const url = new URL('https://nominatim.openstreetmap.org/search');
+            url.searchParams.set('format', 'jsonv2');
+            url.searchParams.set('addressdetails', '1');
+            url.searchParams.set('limit', '8');
+            url.searchParams.set('q', query);
+
+            try {
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Search failed with status ${response.status}`);
+                }
+                const data = await response.json();
+                populateResults(Array.isArray(data) ? data : []);
+                if (data.length) {
+                    setSearchMessage(`Found ${data.length} result${data.length === 1 ? '' : 's'}. Click one to fill coordinates.`, 'success');
+                    setStatus('Search complete. Select a result to continue.', 'success');
+                    selectResult(0);
+                } else {
+                    setSearchMessage('No results found for that address.', 'warning');
+                    setStatus('No search results returned.', 'warning');
+                }
+            } catch (error) {
+                els.resultsContainer.innerHTML = '<div class="empty-state">Could not reach Nominatim right now.</div>';
+                setSearchMessage('Search request failed. Please try again.', 'error');
+                setStatus(error.message, 'error');
+            }
+        }
+
+        async function saveProfile() {
+            const userId = els.userId.value.trim();
+            if (!userId) {
+                setStatus('Add a user ID before saving.', 'warning');
+                return;
+            }
+
+            const lat = Number(els.lat.value);
+            const lon = Number(els.lon.value);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                setStatus('Choose a search result so latitude and longitude are filled.', 'warning');
+                return;
+            }
+
+            const payload = {
+                user_id: userId,
+                address_text: els.addressText.value.trim() || null,
+                preferred_location: [lat, lon]
+            };
+
+            try {
+                const response = await fetch('/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || `Save failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                els.searchMeta.value = data.address_text || `${data.preferred_location[0]}, ${data.preferred_location[1]}`;
+                setBackLink();
+                setStatus(`Profile saved for ${data.user_id}.`, 'success');
+            } catch (error) {
+                setStatus(error.message || 'Could not save profile.', 'error');
+            }
+        }
+
+        async function loadProfile() {
+            const userId = els.userId.value.trim();
+            if (!userId) {
+                setStatus('Enter a user ID to load a profile.', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/profile/${encodeURIComponent(userId)}`);
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || `Load failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                els.addressText.value = data.address_text || '';
+                els.searchQuery.value = data.address_text || els.searchQuery.value;
+                els.lat.value = data.preferred_location[0];
+                els.lon.value = data.preferred_location[1];
+                els.searchMeta.value = data.address_text || 'Loaded profile location';
+                setBackLink();
+                setStatus(`Loaded profile for ${data.user_id}.`, 'success');
+            } catch (error) {
+                setStatus(error.message || 'Could not load profile.', 'error');
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        els.searchResults.addEventListener('change', () => {
+            const index = Number(els.searchResults.value);
+            if (Number.isFinite(index)) {
+                selectResult(index);
+            }
+        });
+
+        els.userId.addEventListener('input', setBackLink);
+        els.searchQuery.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchAddress();
+            }
+        });
+
+        document.getElementById('search-btn').addEventListener('click', searchAddress);
+        document.getElementById('save-btn').addEventListener('click', saveProfile);
+        document.getElementById('load-btn').addEventListener('click', loadProfile);
+
+        const params = new URLSearchParams(window.location.search);
+        const userIdFromQuery = params.get('user_id');
+        if (userIdFromQuery) {
+            els.userId.value = userIdFromQuery;
+            setBackLink();
+            loadProfile();
+        } else {
+            setBackLink();
+        }
+
+        populateResults([]);
+    </script>
+</body>
+</html>
