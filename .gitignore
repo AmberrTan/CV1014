@@ -10,5 +10,7 @@ dist/
 build/
 .env
 .env.*
+docs/
+tests/
 
 .worktrees/
