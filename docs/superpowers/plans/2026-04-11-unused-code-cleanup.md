@@ -11,26 +11,26 @@
 ---
 
 ## File Structure
-- Delete: `/Users/zhoufuwang/Projects/cv1014_2/src/osm_quality.py`
-- Modify: `/Users/zhoufuwang/Projects/cv1014_2/src/models.py`
+- Delete: `/Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src/osm_quality.py`
+- Modify: `/Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src/models.py`
 - Re-scan: `rg` for remaining references
 
 ### Task 1: Remove Unused Module
 
 **Files:**
-- Delete: `/Users/zhoufuwang/Projects/cv1014_2/src/osm_quality.py`
+- Delete: `/Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src/osm_quality.py`
 
 - [ ] **Step 1: Delete the unused module**
 
 ```bash
-git rm /Users/zhoufuwang/Projects/cv1014_2/src/osm_quality.py
+git rm /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src/osm_quality.py
 ```
 
 - [ ] **Step 2: Verify no references remain**
 
 Run:
 ```bash
-rg -n "osm_quality" /Users/zhoufuwang/Projects/cv1014_2/src /Users/zhoufuwang/Projects/cv1014_2/tests /Users/zhoufuwang/Projects/cv1014_2/docs /Users/zhoufuwang/Projects/cv1014_2/README.md
+rg -n "osm_quality" /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/tests /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/docs /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/README.md
 ```
 Expected: no matches.
 
@@ -45,7 +45,7 @@ git commit -m "Remove unused osm quality module"
 ### Task 2: Remove Unused Models and Fields
 
 **Files:**
-- Modify: `/Users/zhoufuwang/Projects/cv1014_2/src/models.py`
+- Modify: `/Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src/models.py`
 
 - [ ] **Step 1: Update models**
 
@@ -111,14 +111,14 @@ class Recommendation(BaseModel):
 
 Run:
 ```bash
-rg -n "UserQuery|RecommendationResponse|prefers_less_crowded|Field" /Users/zhoufuwang/Projects/cv1014_2/src /Users/zhoufuwang/Projects/cv1014_2/tests /Users/zhoufuwang/Projects/cv1014_2/docs /Users/zhoufuwang/Projects/cv1014_2/README.md
+rg -n "UserQuery|RecommendationResponse|prefers_less_crowded|Field" /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/tests /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/docs /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/README.md
 ```
 Expected: no matches.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add /Users/zhoufuwang/Projects/cv1014_2/src/models.py
+git add /Users/zhoufuwang/Projects/cv1014_2/.worktrees/unused-code-cleanup/src/models.py
 
 git commit -m "Remove unused models and fields"
 ```
