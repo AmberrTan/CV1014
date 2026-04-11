@@ -4,238 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GymMatch — Profile</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --success: #166534;
-            --success-bg: #dcfce7;
-            --warning-bg: #fef3c7;
-            --warning-text: #92400e;
-            --error-bg: #fee2e2;
-            --error-text: #b91c1c;
-        }
-
-        * { box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-
-        header a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        main {
-            width: min(100%, 1200px);
-            margin: 0 auto;
-            padding: 2rem;
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            gap: 2rem;
-            align-items: start;
-        }
-
-        .panel {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
-        }
-
-        .panel h2 {
-            margin: 0 0 1rem;
-            font-size: 1.25rem;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 0.45rem;
-            margin-bottom: 1rem;
-        }
-
-        label {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        input, select, button, textarea {
-            width: 100%;
-            padding: 0.7rem 0.75rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font: inherit;
-            color: inherit;
-            background: white;
-        }
-
-        input:focus, select:focus, button:focus, textarea:focus {
-            outline: 2px solid rgba(37, 99, 235, 0.18);
-            outline-offset: 1px;
-            border-color: var(--primary);
-        }
-
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        button {
-            width: auto;
-            padding: 0.75rem 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-        }
-
-        button:hover { transform: translateY(-1px); }
-
-        .primary {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .primary:hover { background: var(--primary-hover); }
-
-        .secondary {
-            background: white;
-            color: var(--text-main);
-        }
-
-        .helper {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .status {
-            margin-top: 1rem;
-            padding: 0.85rem 1rem;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            min-height: 3rem;
-            display: flex;
-            align-items: center;
-            border: 1px solid transparent;
-        }
-
-        .status.info {
-            background: #eff6ff;
-            color: #1d4ed8;
-            border-color: #bfdbfe;
-        }
-
-        .status.success {
-            background: var(--success-bg);
-            color: var(--success);
-            border-color: #bbf7d0;
-        }
-
-        .status.warning {
-            background: var(--warning-bg);
-            color: var(--warning-text);
-            border-color: #fde68a;
-        }
-
-        .status.error {
-            background: var(--error-bg);
-            color: var(--error-text);
-            border-color: #fecaca;
-        }
-
-        .results-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.85rem;
-            margin-top: 1rem;
-        }
-
-        .result-card {
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 0.85rem 1rem;
-            cursor: pointer;
-            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            background: #fff;
-        }
-
-        .result-card:hover {
-            border-color: #93c5fd;
-            transform: translateY(-1px);
-            box-shadow: 0 8px 14px rgba(15, 23, 42, 0.05);
-        }
-
-        .result-card strong {
-            display: block;
-            margin-bottom: 0.25rem;
-        }
-
-        .result-card small {
-            color: var(--text-muted);
-            display: block;
-            line-height: 1.4;
-        }
-
-        .empty-state {
-            border: 1px dashed var(--border);
-            border-radius: 10px;
-            padding: 1rem;
-            color: var(--text-muted);
-            background: #f8fafc;
-        }
-
-        .row-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 920px) {
-            main { grid-template-columns: 1fr; }
-            header { padding: 1rem; }
-            main { padding: 1rem; }
-            .grid { grid-template-columns: 1fr; }
-        }
-    </style>
 </head>
 <body>
     <header>
@@ -299,7 +67,7 @@
                 <input id="search_meta" type="text" placeholder="No selection yet" readonly>
             </div>
 
-            <div id="search-message" class="status warning" style="display:none;"></div>
+            <div id="search-message" class="status warning" hidden></div>
             <div id="results-container" class="results-list"></div>
         </section>
     </main>
@@ -327,13 +95,13 @@
         }
 
         function setSearchMessage(message, type = 'warning') {
-            els.searchMessage.style.display = 'flex';
+            els.searchMessage.hidden = false;
             els.searchMessage.className = `status ${type}`;
             els.searchMessage.textContent = message;
         }
 
         function hideSearchMessage() {
-            els.searchMessage.style.display = 'none';
+            els.searchMessage.hidden = true;
             els.searchMessage.textContent = '';
         }
 
